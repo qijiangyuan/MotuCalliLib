@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>墨研书法字库 - 集字</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container py-4">
+    <h1 class="mb-4">墨研书法字库 - 集字</h1>
+
+    <!-- 集字输入区域 -->
+    <div class="mb-4 p-4 bg-light rounded-lg">
+        <h3 class="mb-3">输入文字内容</h3>
+        <textarea class="form-control" id="textInput" rows="4" placeholder="请输入要集字的文字内容"></textarea>
+        <div class="mt-3 d-flex flex-wrap gap-2">
+            <select class="form-select" id="fontSelect" style="width: auto;">
+                <option value="">选择字体</option>
+            </select>
+            <select class="form-select" id="calligrapherSelect" style="width: auto;">
+                <option value="">选择书法家</option>
+            </select>
+            <select class="form-select" id="bookSelect" style="width: auto;">
+                <option value="">选择典籍</option>
+            </select>
+            <select class="form-select" id="directionSelect" style="width: auto;">
+                <option value="horizontal">从左到右(横排)</option>
+                <option value="horizontal-reverse">从右到左(横排)</option>
+                <option value="vertical-left">从上到下(竖排-左起)</option>
+                <option value="vertical-right">从上到下(竖排-右起)</option>
+            </select>
+            <input type="number" class="form-control" id="charsPerLineInput" value="5" min="0" placeholder="每行显示字数" style="width: auto;">
+            </select>
+            <button class="btn btn-primary" id="generateBtn">生成集字</button>
+        </div>
+    </div>
+
+    <!-- 集字结果区域 -->
+    <div class="mb-4">
+        <h3>集字结果</h3>
+        <div id="resultContainer" class="p-4 border rounded-lg min-vh-50 flex items-center justify-center" style="display: flex; flex-direction: column;">
+            <p class="text-muted">请输入文字并点击生成按钮</p>
+        </div>
+    </div>
+
+    <!-- 操作按钮区域 -->
+    <div class="mb-4 d-flex justify-content-center gap-3">
+        <button class="btn btn-secondary" id="clearBtn">清空</button>
+        <button class="btn btn-primary" id="saveBtn">保存</button>
+        <button class="btn btn-success" id="exportBtn">导出图片</button>
+    </div>
+</div>
+
+<!-- 引入Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+
+<!-- 底部导航tab -->
+<nav class="navbar fixed-bottom navbar-light bg-light py-0">
+    <div class="container-fluid justify-content-center">
+        <ul class="nav nav-tabs w-100" id="bottomNav" role="tablist">
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <a class="nav-link w-100" href="/" aria-selected="false">字库</a>
+            </li>
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <a class="nav-link active w-100" href="/calligraphy_set" aria-selected="true">集字</a>
+            </li>
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <button class="nav-link w-100" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">设置</button>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- 选项卡内容区域 -->
+<div class="tab-content" id="bottomNavContent" style="margin-bottom: 70px;">
+    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+        <div class="container py-4">
+            <h3 class="text-center my-4">设置</h3>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="darkModeToggle">
+                        <label class="form-check-label" for="darkModeToggle">启用深色模式</label>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="fontSizeSelect">字体大小</label>
+                        <select class="form-select" id="fontSizeSelect">
+                            <option value="small">小</option>
+                            <option value="medium" selected>中</option>
+                            <option value="large">大</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="/static/calligraphy_set.js"></script>
+</body>
+</html>

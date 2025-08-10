@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: motu-callilib
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app_new.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: LOG_TO_FILE
+        value: "false"
