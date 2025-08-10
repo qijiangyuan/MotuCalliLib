@@ -24,6 +24,9 @@ image_cache/
 *.swp
 *.swo
 
+# 数据库文件（太大，不上传）
+data/shufadb.db
+
 # 系统文件
 .DS_Store
 Thumbs.db
