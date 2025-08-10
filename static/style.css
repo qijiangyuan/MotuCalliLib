@@ -2,20 +2,42 @@ body {
     background-color: #f8f9fa;
     --input-height: 38px;
 }
+
+
+#results {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start; /* 防止Bootstrap row的等高拉伸 */
+}
+
 .glyph-card {
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
     text-align: center;
-    width: 100%; /* 使用全宽度 */
-    min-height: 300px; /* 最小高度 */
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    padding: 10px;
-    box-sizing: border-box;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    background-color: white;
-    margin-bottom: 15px;
+}
+
+.glyph-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* 限制glyph-card中small元素的文字为单行显示 */
+.glyph-card small {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+    margin-top: 5px;
+    color: #6c757d;
+    font-size: 0.875rem;
 }
 
 /* 集字页卡片样式 - 方块显示，无边框 */
@@ -45,9 +67,32 @@ body {
 }
 .glyph-img {
     width: 100%;
-    height: 100%;
-    object-fit: contain; /* 保持图片比例 */
-    margin: 0; /* 移除边距 */
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    margin: 4px 0;
+    border-radius: 4px;
+    display: block;
+}
+
+/* 卡片内容区域 */
+.glyph-card > div:first-child,
+.glyph-card > small {
+    padding: 12px;
+}
+
+.glyph-card > div:first-child {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    padding-bottom: 4px;
+}
+
+.glyph-card > small {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+    padding-top: 0;
+    line-height: 1.3;
 }
 .loading {
     text-align: center;
@@ -59,46 +104,74 @@ body {
     border-radius: 0 !important;
 }
 
-/* 统一select2下拉框与输入框高度和边框颜色 */
+/* 统一select2下拉框与Bootstrap表单控件样式 */
 .select2-container .select2-selection--single {
-    height: 38px !important;
-    border-color: #ced4da !important;
+    height: 44px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    background-color: #fff !important;
 }
 
-/* 统一输入框和下拉框的边框颜色和圆角半径 */
 .form-control,
 .select2-container--default .select2-selection--single {
-    border-color: #ced4da !important;
     border-radius: 0.375rem !important;
+    font-size: 16px !important;
 }
 
-/* 聚焦时的边框颜色也保持一致 */
 .form-control:focus,
 .select2-container--default.select2-container--focus .select2-selection--single {
-    border-color: #80bdff !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    border-color: #86b7fe !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
 }
 
-/* 设置输入框placeholder颜色为浅灰色 */
-input::placeholder {
-    color: #9ca3af !important;
-    opacity: 1 !important;
-}
+/* 确保select2文本垂直居中 */
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 38px !important;
-    padding: 0 12px !important;
+    line-height: 42px !important;
+    padding-left: 12px !important;
+    padding-right: 20px !important;
+    color: #495057 !important;
 }
+
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 38px !important;
+    height: 44px !important;
+    right: 10px !important;
 }
 
 /* 确保select2删除按钮垂直居中、大小合适且位置适当 */
 .select2-container--default .select2-selection--single .select2-selection__clear {
-    height: 35px !important;
-    line-height: 0px !important;
-    font-size: 25px !important; /* 增大删除按钮大小 */
-     margin-right: 25px !important; /* 稍微靠左 */
+    position: absolute;
+    top: 50%;
+    right: 30px;
+    transform: translateY(-50%);
+    font-size: 18px;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 2;
 }
+
+.select2-container--default .select2-selection--single .select2-selection__clear:hover {
+    color: #495057;
+}
+
+/* Select2下拉菜单样式 */
+.select2-container--default .select2-results__option {
+    padding: 8px 12px !important;
+    font-size: 16px !important;
+}
+
+.select2-container--default .select2-results__option--highlighted {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+input::placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+}
+
+
 
 /* 底部导航tab样式 */
 .navbar.fixed-bottom {
@@ -124,9 +197,227 @@ input::placeholder {
     padding-top: 15px;
 }
 
-/* 适配移动设备的导航样式 */
-@media (max-width: 576px) {
+/* 电脑端6列布局优化 */
+@media (min-width: 1200px) {
+    .glyph-card {
+        padding: 8px;
+    }
+    
+    .glyph-card div:first-child {
+        font-size: 1rem;
+        margin-bottom: 6px;
+    }
+    
+    .glyph-card small {
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+}
+
+/* iPad端4列布局优化 */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .glyph-card {
+        padding: 8px;
+        margin-bottom: 4px;
+    }
+    
+    .glyph-card small {
+        font-size: 0.85rem;
+        margin-top: 4px;
+        line-height: 1.3;
+    }
+}
+
+/* 手机端3列布局优化 */
+@media (max-width: 767px) {
+    .glyph-card {
+        padding: 6px;
+        margin-bottom: 4px;
+    }
+    
+    .glyph-card div:first-child {
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    
+    .glyph-card small {
+        font-size: 0.7rem;
+        margin-top: 3px;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* CSS Grid布局代码已屏蔽，使用Bootstrap响应式类 */
+/*
+.search-filters-container {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.search-filters-container {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 991px) {
+    .search-filters-container {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .search-filters-container .filter-item:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 767px) {
+    .search-filters-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-filters-container .filter-item:nth-child(3) {
+        grid-column: auto;
+    }
+}
+*/
+
+/* 移动端优化样式 */
+@media (max-width: 768px) {
+    /* 容器内边距优化 */
+    .container {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+    
+    /* 标题字体大小优化 */
+    h1 {
+        font-size: 1.8rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    /* 搜索表单优化 - 暂时屏蔽 */
+    /*
+    .form-control, .form-select, .btn {
+        font-size: 16px !important;
+        border-radius: 8px !important;
+    }
+    
+    .select2-container .select2-selection--single {
+        height: 44px !important;
+        font-size: 16px !important;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 44px !important;
+        font-size: 16px !important;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 44px !important;
+    }
+    */
+    
+    /* 汉字按钮区域优化 */
+    #hanziButtons .btn {
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+        margin: 3px !important;
+    }
+    
+    /* 结果卡片优化 */
+    .glyph-card {
+        min-height: 250px !important;
+        padding: 8px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .glyph-img {
+        max-height: 180px !important;
+    }
+    
+    /* 分页按钮优化 */
+    .page-link {
+        padding: 10px 15px !important;
+        font-size: 16px !important;
+    }
+    
+    /* 底部导航优化 */
     .nav-item {
         font-size: 14px;
     }
+    
+    .nav-link {
+        padding: 12px 8px !important;
+    }
+    
+    /* 设置页面优化 */
+    .form-check-label {
+        font-size: 16px !important;
+    }
+    
+    .form-check-input {
+         transform: scale(1.2);
+         margin-right: 8px !important;
+     }
+     
+     /* 集字页面移动端优化 */
+     .bg-light.rounded-lg {
+         padding: 15px !important;
+         margin-bottom: 20px !important;
+     }
+     
+     .bg-light.rounded-lg h3 {
+         font-size: 1.3rem !important;
+         margin-bottom: 15px !important;
+     }
+     
+     #textInput {
+         font-size: 16px !important;
+         min-height: 120px !important;
+     }
+     
+     /* 集字页面的flex布局优化 - 不影响搜索过滤器 */
+     .calligraphy-controls .d-flex.flex-wrap.gap-2 {
+         gap: 8px !important;
+     }
+     
+     .calligraphy-controls .d-flex.flex-wrap.gap-2 .form-select,
+     .calligraphy-controls .d-flex.flex-wrap.gap-2 .form-control {
+         min-width: 120px !important;
+         margin-bottom: 8px !important;
+     }
+     
+
+     
+     #charsPerLineInput {
+         max-width: 150px !important;
+     }
+     
+     /* 集字结果区域优化 */
+     #resultContainer {
+         min-height: 200px !important;
+         padding: 15px !important;
+     }
+     
+     /* 集字结果中的字符容器 */
+     #resultContainer .char-container {
+         width: 80px !important;
+         height: 80px !important;
+         margin: 3px !important;
+     }
+     
+     /* 集字页面操作按钮区域优化 - 限制作用范围 */
+     .calligraphy-page .d-flex.justify-content-center.gap-3 {
+         flex-direction: column !important;
+         gap: 10px !important;
+     }
+     
+     .calligraphy-page .d-flex.justify-content-center.gap-3 .btn {
+         width: 100% !important;
+         padding: 12px !important;
+         font-size: 16px !important;
+     }
 }

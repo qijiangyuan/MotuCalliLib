@@ -388,62 +388,60 @@ function renderResults(items, append) {
     if (!append) container.innerHTML = "";
 
     items.forEach(item => {
-        const col = document.createElement("div");
-            col.className = "col-md-3";
+        // 创建Bootstrap列容器
+        const colDiv = document.createElement('div');
+        colDiv.className = 'col-xl-2 col-lg-2 col-md-3 col-4 mb-3';
+
         // 创建卡片容器
-            const card = document.createElement('div');
-            card.className = 'glyph-card';
+        const card = document.createElement('div');
+        card.className = 'glyph-card';
 
-            // 创建文字信息
-            const hanDiv = document.createElement('div');
-            hanDiv.textContent = item.han;
-            card.appendChild(hanDiv);
+        // 创建文字信息
+        const hanDiv = document.createElement('div');
+        hanDiv.textContent = item.han;
+        card.appendChild(hanDiv);
 
-            // 创建作者信息
-            const infoSmall = document.createElement('small');
-            infoSmall.textContent = `${item.font} | ${item.author} | ${item.book_title || ''}`;
-            card.appendChild(infoSmall);
+        // 创建图片容器
+        const imgContainer = document.createElement('div');
+        imgContainer.style.display = 'flex';
+        imgContainer.style.flexWrap = 'wrap';
+        imgContainer.style.justifyContent = 'center';
+        imgContainer.style.alignItems = 'center';
+        imgContainer.style.flex = '1';
+        imgContainer.style.overflow = 'hidden';
+        imgContainer.style.width = '100%';
+        card.appendChild(imgContainer);
 
-            // 创建图片容器
-            const imgContainer = document.createElement('div');
-            imgContainer.style.display = 'flex';
-            imgContainer.style.flexWrap = 'wrap';
-            imgContainer.style.justifyContent = 'center';
-            card.appendChild(imgContainer);
+        // 创建作者信息
+        const infoSmall = document.createElement('small');
+        infoSmall.textContent = `${item.font} | ${item.author} | ${item.book_title || ''}`;
+        card.appendChild(infoSmall);
 
-            // 创建查看更多按钮
-            const showMoreBtn = document.createElement('button');
-            showMoreBtn.className = 'btn btn-sm btn-outline-primary mt-2';
-            showMoreBtn.textContent = '查看更多';
-            showMoreBtn.style.display = 'none';
-            showMoreBtn.onclick = function() {
-                // 在新窗口中打开查看所有图片页面
-                window.open(`/view_all_images.html?glyph_id=${item.id}&han=${encodeURIComponent(item.han)}&author=${encodeURIComponent(item.author)}&book=${encodeURIComponent(item.book_title || '')}`, '_blank');
-            };
-            card.appendChild(showMoreBtn);
+        // 异步加载图片，默认只显示1张
+        fetch(`/images/${item.id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.image_urls && data.image_urls.length > 0) {
+                    // 只显示第一张图片
+                    const img = document.createElement('img');
+                    img.className = 'glyph-img';
+                    img.alt = item.han;
+                    img.src = data.image_urls[0];
+                    imgContainer.appendChild(img);
+                }
+            })
+            .catch(error => {
+                console.error('加载图片失败:', error);
+            });
 
-            col.appendChild(card);
+        // 为卡片添加点击事件
+        card.onclick = function() {
+            // 在新窗口中打开查看所有图片页面
+            window.open(`/view_all_images.html?glyph_id=${item.id}&han=${encodeURIComponent(item.han)}&author=${encodeURIComponent(item.author)}&book=${encodeURIComponent(item.book_title || '')}`, '_blank');
+        };
 
-            // 异步加载图片，默认只显示1张
-            fetch(`/images/${item.id}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.image_urls && data.image_urls.length > 0) {
-                        // 只显示第一张图片
-                        const img = document.createElement('img');
-                        img.className = 'glyph-img';
-                        img.alt = item.han;
-                        img.src = data.image_urls[0];
-                        imgContainer.appendChild(img);
-
-                        // 始终显示查看更多按钮，即使只有一张图片
-                        showMoreBtn.style.display = 'inline-block';
-                    }
-                })
-                .catch(error => {
-                    console.error('加载图片失败:', error);
-                });
-        container.appendChild(col);
+        colDiv.appendChild(card);
+        container.appendChild(colDiv);
     });
 }
 

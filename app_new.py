@@ -36,6 +36,11 @@ def view_all_images():
 def calligraphy_set():
     return render_template("calligraphy_set.html")
 
+# 布局测试页面
+@app.route("/test_layout")
+def test_layout():
+    return render_template("test_layout.html")
+
 # 获取下拉选项
 @app.route("/api/options")
 def api_options():

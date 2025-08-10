@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>墨研书法字库</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet">
@@ -14,27 +15,34 @@
     <h1 class="mb-4">墨研书法字库</h1>
 
     <!-- 搜索表单 -->
-    <form id="searchForm" class="row g-3 mb-4 flex-nowrap items-center">
-        <div class="col-md-5 pe-2">
-            <input type="text" class="form-control" name="han" id="hanInput" placeholder="汉字（可输入多个）" style="height: 38px;">
+    <form id="searchForm" class="mb-4">
+        <!-- 第一行：输入框和搜索按钮 -->
+        <div class="row g-2 mb-3">
+            <div class="col-lg-9 col-md-8 col-sm-12">
+                <input type="text" class="form-control" name="han" id="hanInput" placeholder="汉字（可输入多个）" style="height: 44px; font-size: 16px;">
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-12">
+                <button type="submit" class="btn btn-primary w-100" style="height: 44px; font-size: 16px;">搜索</button>
+            </div>
         </div>
-        <div class="col-md-2 pe-2">
-            <select class="form-select select2" name="font" id="fontSelect" style="height: 38px;">
-                <option value="">字体</option>
-            </select>
-        </div>
-        <div class="col-md-2 pe-2">
-            <select class="form-select select2" name="author" id="authorSelect" style="height: 38px;">
-                <option value="">书法家</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select class="form-select select2" name="book" id="bookSelect" style="height: 38px;">
-                <option value="">来源典籍</option>
-            </select>
-        </div>
-        <div class="col-md-1 pe-2">
-            <button type="submit" class="btn btn-primary w-100" style="height: 38px;">搜索</button>
+        
+        <!-- 第二行：三个下拉框 -->
+        <div class="row g-2 mb-3" id="searchFilters">
+            <div class="col-lg-4 col-md-4 col-sm-12">
+                <select class="form-select select2" name="font" id="fontSelect" style="height: 44px;">
+                    <option value="">字体</option>
+                </select>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12">
+                <select class="form-select select2" name="author" id="authorSelect" style="height: 44px;">
+                    <option value="">书法家</option>
+                </select>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-12">
+                <select class="form-select select2" name="book" id="bookSelect" style="height: 44px;">
+                    <option value="">来源典籍</option>
+                </select>
+            </div>
         </div>
     </form>
 
@@ -66,7 +74,7 @@
 
 <!-- 底部导航tab -->
 <nav class="navbar fixed-bottom navbar-light bg-light py-0">
-    <div class="container-fluid justify-content-center">
+    <div class="container">
         <ul class="nav nav-tabs w-100" id="bottomNav" role="tablist">
             <li class="nav-item flex-fill text-center" role="presentation">
                 <a class="nav-link active w-100" href="/" aria-selected="true">字库</a>

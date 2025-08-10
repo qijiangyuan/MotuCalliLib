@@ -717,7 +717,7 @@ function exportAsImage() {
     loadingDiv.style.color = 'white';
     loadingDiv.style.borderRadius = '8px';
     loadingDiv.style.zIndex = '10000';
-    loadingDiv.innerHTML = '<div style="text-align: center;"><div style="border: 3px solid #f3f3f3;border-top: 3px solid #3498db;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;margin: 0 auto 10px;"></div>正在生成图片，请稍候...</div>';
+    loadingDiv.innerHTML = '<div style="text-align: center;"><div style="border: 3px solid #f3f3f3;border-top: 3px solid #3498db;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;margin: 0 auto 10px;"></div><div style="margin-top: 10px;">正在生成图片，请稍候...</div></div>';
     document.body.appendChild(loadingDiv);
 
     // 添加旋转动画
@@ -857,7 +857,7 @@ function exportAsImage() {
         loadingDiv.style.color = 'white';
         loadingDiv.style.borderRadius = '8px';
         loadingDiv.style.zIndex = '10000';
-        loadingDiv.innerHTML = '<div style="text-align: center;"><div style="border: 3px solid #f3f3f3;border-top: 3px solid #3498db;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;margin: 0 auto 10px;"></div>正在生成图片，请稍候...</div>';
+        loadingDiv.innerHTML = '<div style="text-align: center;"><div style="border: 3px solid #f3f3f3;border-top: 3px solid #3498db;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;margin: 0 auto 10px;"></div><div style="margin-top: 10px;">正在生成图片，请稍候...</div></div>';
         document.body.appendChild(loadingDiv);
 
         // 发送请求到后端API
@@ -930,41 +930,7 @@ function exportAsImage() {
                     document.body.removeChild(successDiv);
                 }, 5000);
 
-                // 提供可选的预览按钮
-                const previewBtn = document.createElement('button');
-                previewBtn.style.position = 'fixed';
-                previewBtn.style.bottom = '20px';
-                previewBtn.style.right = '20px';
-                previewBtn.style.padding = '10px 15px';
-                previewBtn.style.backgroundColor = '#2196F3';
-                previewBtn.style.color = 'white';
-                previewBtn.style.border = 'none';
-                previewBtn.style.borderRadius = '4px';
-                previewBtn.style.cursor = 'pointer';
-                previewBtn.style.zIndex = '10001';
-                previewBtn.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-                previewBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><circle cx="12" cy="12" r="3"></circle><line x1="16.24" y1="7.76" x2="14.12" y2="9.88"></line><line x1="8" y1="12" x2="12" y2="12"></line><line x1="9.88" y1="14.12" x2="7.76" y2="16.24"></line><line x1="12" y1="16" x2="12" y2="16"></line></svg>查看预览';
-                document.body.appendChild(previewBtn);
 
-                previewBtn.onclick = function () {
-                    const previewWindow = window.open('', '_blank');
-                    if (previewWindow) {
-                        const img = new Image();
-                        img.src = url;
-                        previewWindow.document.write('<html><head><title>导出预览</title></head><body style="margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh;"><img src="' + url + '" style="max-width: 90%; max-height: 90%;" /></body></html>');
-                        document.body.removeChild(previewBtn);
-                    } else {
-                        console.warn('预览窗口被浏览器阻止');
-                        alert('预览窗口被浏览器阻止，请允许弹出窗口后重试');
-                    }
-                };
-
-                // 10秒后自动移除预览按钮
-                setTimeout(() => {
-                    if (previewBtn && previewBtn.parentNode === document.body) {
-                        document.body.removeChild(previewBtn);
-                    }
-                }, 10000);
             })
             .catch(error => {
                 // 移除加载状态
