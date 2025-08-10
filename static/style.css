@@ -52,6 +52,11 @@ body {
     background-color: transparent; /* 透明背景 */
 }
 
+/* 集字结果中的图片无圆角 */
+#resultContainer .glyph-img {
+    border-radius: 0 !important; /* 强制无圆角 */
+}
+
 /* 文字叠加样式 */
 .char-overlay {
     position: absolute;
@@ -104,66 +109,16 @@ body {
     border-radius: 0 !important;
 }
 
-/* 统一select2下拉框与Bootstrap表单控件样式 */
-.select2-container .select2-selection--single {
-    height: 44px !important;
-    border: 1px solid #ced4da !important;
-    border-radius: 0.375rem !important;
-    background-color: #fff !important;
-}
-
-.form-control,
-.select2-container--default .select2-selection--single {
+/* 统一表单控件样式 */
+.form-control {
     border-radius: 0.375rem !important;
     font-size: 16px !important;
 }
 
-.form-control:focus,
-.select2-container--default.select2-container--focus .select2-selection--single {
+.form-control:focus {
     border-color: #86b7fe !important;
     outline: 0 !important;
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
-}
-
-/* 确保select2文本垂直居中 */
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 42px !important;
-    padding-left: 12px !important;
-    padding-right: 20px !important;
-    color: #495057 !important;
-}
-
-.select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 44px !important;
-    right: 10px !important;
-}
-
-/* 确保select2删除按钮垂直居中、大小合适且位置适当 */
-.select2-container--default .select2-selection--single .select2-selection__clear {
-    position: absolute;
-    top: 50%;
-    right: 30px;
-    transform: translateY(-50%);
-    font-size: 18px;
-    line-height: 1;
-    color: #6c757d;
-    cursor: pointer;
-    z-index: 2;
-}
-
-.select2-container--default .select2-selection--single .select2-selection__clear:hover {
-    color: #495057;
-}
-
-/* Select2下拉菜单样式 */
-.select2-container--default .select2-results__option {
-    padding: 8px 12px !important;
-    font-size: 16px !important;
-}
-
-.select2-container--default .select2-results__option--highlighted {
-    background-color: #0d6efd !important;
-    color: white !important;
 }
 
 input::placeholder {
@@ -379,22 +334,7 @@ input::placeholder {
          min-height: 120px !important;
      }
      
-     /* 集字页面的flex布局优化 - 不影响搜索过滤器 */
-     .calligraphy-controls .d-flex.flex-wrap.gap-2 {
-         gap: 8px !important;
-     }
-     
-     .calligraphy-controls .d-flex.flex-wrap.gap-2 .form-select,
-     .calligraphy-controls .d-flex.flex-wrap.gap-2 .form-control {
-         min-width: 120px !important;
-         margin-bottom: 8px !important;
-     }
-     
-
-     
-     #charsPerLineInput {
-         max-width: 150px !important;
-     }
+     /* 移除旧的集字页面样式，避免与新样式冲突 */
      
      /* 集字结果区域优化 */
      #resultContainer {
@@ -419,5 +359,193 @@ input::placeholder {
          width: 100% !important;
          padding: 12px !important;
          font-size: 16px !important;
+     }
+}
+
+/* 集字界面统一样式 */
+.calligraphy-input-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.calligraphy-input-section h3 {
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+    display: inline-block;
+}
+
+.calligraphy-input-section h5 {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.calligraphy-textarea {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.calligraphy-textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+.calligraphy-controls .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+.calligraphy-select,
+.calligraphy-input {
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 15px;
+    height: 44px !important;
+    line-height: 1.5;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+/* 确保数字输入框与其他控件高度一致 */
+input[type="number"].calligraphy-input,
+#charsPerLineInput {
+    height: 44px !important;
+    line-height: 1.5 !important;
+    padding: 8px 12px !important;
+    box-sizing: border-box !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 6px !important;
+    font-size: 15px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+}
+
+.calligraphy-select:focus,
+.calligraphy-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+.calligraphy-select:hover,
+.calligraphy-input:hover {
+    border-color: #80bdff;
+}
+
+.calligraphy-btn {
+    height: 44px !important;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    box-sizing: border-box;
+    vertical-align: middle;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calligraphy-btn:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.calligraphy-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+/* Select2 样式优化 */
+.select2-container {
+    border-radius: 6px;
+    font-size: 15px;
+    height: 44px !important;
+}
+
+.select2-container .select2-selection--single {
+    height: 44px !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 6px !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 40px !important;
+    padding-left: 12px !important;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.select2-container .select2-selection--single .select2-selection__arrow {
+    height: 44px !important;
+    right: 10px !important;
+}
+
+.select2-container:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.select2-selection__clear {
+    margin-right: 10px;
+    position: absolute !important;
+    right: 30px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 20px !important;
+    width: 20px !important;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .calligraphy-input-section {
+        padding: 20px 15px !important;
+    }
+    
+    .calligraphy-textarea {
+        font-size: 16px !important;
+        min-height: 100px !important;
+    }
+    
+    .calligraphy-select,
+    .calligraphy-input,
+    .calligraphy-btn {
+        height: 44px !important;
+        font-size: 16px !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* 确保移动端数字输入框高度一致 */
+     input[type="number"].calligraphy-input,
+     #charsPerLineInput {
+         height: 44px !important;
+         line-height: 1.5 !important;
+         padding: 8px 12px !important;
+         box-sizing: border-box !important;
+         border: 2px solid #e9ecef !important;
+         border-radius: 6px !important;
+         font-size: 16px !important;
+         min-height: 44px !important;
+         max-height: 44px !important;
      }
 }

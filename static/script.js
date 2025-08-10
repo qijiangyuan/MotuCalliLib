@@ -99,12 +99,12 @@ function loadOptions() {
             // 初始化出处选择框
             const bookSelect = document.getElementById('bookSelect');
             $(bookSelect).empty();
-            $(bookSelect).append($('<option>', {value: '', text: '来源典籍'}));
+            $(bookSelect).append($('<option>', {value: '', text: '典籍'}));
             data.books.forEach(book => {
                 $(bookSelect).append($('<option>', {value: book, text: book}));
             });
             $(bookSelect).select2({
-                placeholder: '来源典籍',
+                placeholder: '典籍',
                 allowClear: true,
                 width: '100%'
             });

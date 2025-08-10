@@ -57,7 +57,7 @@ def api_options():
 def search():
     han = request.args.get("han", "").strip()
     font = request.args.get("font", "").strip()
-    author = request.args.get("calligrapher", "").strip()
+    author = request.args.get("author", "").strip()
     book = request.args.get("book", "").strip()
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 20))
@@ -66,7 +66,7 @@ def search():
     logger.info(f"收到/api/search请求")
     logger.debug(f"- han: {han}")
     logger.debug(f"- font: {font}")
-    logger.debug(f"- calligrapher: {author}")
+    logger.debug(f"- author: {author}")
     logger.debug(f"- book: {book}")
     # 添加获取所有结果的参数
     get_all = request.args.get("all", "false").lower() == "true"

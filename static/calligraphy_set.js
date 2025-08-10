@@ -16,7 +16,7 @@ function loadOptions() {
         .then(data => {
             // 加载字体选项
             const fontSelect = document.getElementById("fontSelect");
-            fontSelect.innerHTML = '<option value="">选择字体</option>';
+            fontSelect.innerHTML = '<option value="">字体</option>';
             data.fonts.forEach(font => {
                 const option = document.createElement("option");
                 option.value = font;
@@ -24,14 +24,20 @@ function loadOptions() {
                 fontSelect.appendChild(option);
             });
             $(fontSelect).select2({
-                placeholder: '选择字体',
+                placeholder: '字体',
                 allowClear: true,
-                width: 'auto'
+                width: '100%'
+            }).on('select2:open select2:close', function() {
+                // 强制重新应用高度样式
+                setTimeout(() => {
+                    $('.select2-container').css('height', '44px');
+                    $('.select2-selection').css('height', '44px');
+                }, 10);
             });
 
             // 加载书法家选项
             const calligrapherSelect = document.getElementById("calligrapherSelect");
-            calligrapherSelect.innerHTML = '<option value="">选择书法家</option>';
+            calligrapherSelect.innerHTML = '<option value="">书法家</option>';
             data.authors.forEach(author => {
                 const option = document.createElement("option");
                 option.value = author;
@@ -39,14 +45,20 @@ function loadOptions() {
                 calligrapherSelect.appendChild(option);
             });
             $(calligrapherSelect).select2({
-                placeholder: '选择书法家',
+                placeholder: '书法家',
                 allowClear: true,
-                width: 'auto'
+                width: '100%'
+            }).on('select2:open select2:close', function() {
+                // 强制重新应用高度样式
+                setTimeout(() => {
+                    $('.select2-container').css('height', '44px');
+                    $('.select2-selection').css('height', '44px');
+                }, 10);
             });
 
             // 加载典籍选项
             const bookSelect = document.getElementById("bookSelect");
-            bookSelect.innerHTML = '<option value="">选择典籍</option>';
+            bookSelect.innerHTML = '<option value="">典籍</option>';
             data.books.forEach(book => {
                 const option = document.createElement("option");
                 option.value = book;
@@ -54,10 +66,40 @@ function loadOptions() {
                 bookSelect.appendChild(option);
             });
             $(bookSelect).select2({
-                placeholder: '选择典籍',
+                placeholder: '典籍',
                 allowClear: true,
-                width: 'auto'
+                width: '100%'
+            }).on('select2:open select2:close', function() {
+                // 强制重新应用高度样式
+                setTimeout(() => {
+                    $('.select2-container').css('height', '44px');
+                    $('.select2-selection').css('height', '44px');
+                }, 10);
             });
+
+            // 初始化排列方式选择框
+            const directionSelect = document.getElementById("directionSelect");
+            $(directionSelect).select2({
+                placeholder: '排列方式',
+                allowClear: true,
+                width: '100%'
+            }).on('select2:open select2:close', function() {
+                // 强制重新应用高度样式
+                setTimeout(() => {
+                    $('.select2-container').css('height', '44px');
+                    $('.select2-selection').css('height', '44px');
+                }, 10);
+            });
+            
+            // 设置默认选中值
+            $(directionSelect).val('horizontal').trigger('change');
+
+            // 所有Select2初始化完成后，统一强制应用高度样式
+            setTimeout(() => {
+                $('.select2-container').css('height', '44px');
+                $('.select2-selection').css('height', '44px');
+                $('.select2-selection__rendered').css('line-height', '40px');
+            }, 100);
         });
 }
 
