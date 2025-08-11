@@ -14,7 +14,16 @@ document.addEventListener("DOMContentLoaded", () => {
         page = 1;
         isShowingAll = false; // 重置为默认显示
         document.getElementById("results").innerHTML = "";
-        currentQuery = Object.fromEntries(new FormData(e.target).entries());
+        
+        // 手动获取表单数据，确保Select2的值被正确获取
+        currentQuery = {
+            han: document.getElementById("hanInput").value.trim(),
+            font: document.getElementById("fontSelect").value,
+            author: document.getElementById("authorSelect").value,
+            book: document.getElementById("bookSelect").value
+        };
+        
+        console.log("搜索参数:", currentQuery); // 添加调试日志
         search();
         // 生成汉字按钮
         generateHanziButtons(currentQuery.han);
@@ -240,14 +249,10 @@ function search(append=false) {
         });
 }
 
-// 生成页码按钮
+// 生成页码按钮 - 极简版本：只显示"当前页/总页数"
 function generatePageNumbers(totalPages) {
     const pageNumbersContainer = document.getElementById("pageNumbers");
     pageNumbersContainer.innerHTML = "";
-    
-    // 设置最后一页按钮文本
-    const lastPageBtn = document.getElementById("lastPageBtn");
-    lastPageBtn.querySelector("a").textContent = totalPages;
     
     // 显示/隐藏分页控制元素 - 严格控制只有在有结果且非显示全部时才显示
     console.log('generatePageNumbers() - 分页显示判断:');
@@ -261,27 +266,18 @@ function generatePageNumbers(totalPages) {
         } else {
             document.getElementById("paginationContainer").style.display = "none";
             console.log('generatePageNumbers() - 分页容器已隐藏');
-            // 确保所有分页元素都被隐藏
-            document.getElementById("prevPageBtn").style.display = "none";
-            document.getElementById("nextPageBtn").style.display = "none";
-            document.getElementById("firstPageBtn").style.display = "none";
-            document.getElementById("ellipsisStart").style.display = "none";
-            document.getElementById("pageNumbers").innerHTML = "";
-            document.getElementById("pageNumbersContainer").style.display = "none";
-            document.getElementById("ellipsisEnd").style.display = "none";
-            document.getElementById("lastPageBtn").style.display = "none";
             return;
         }
     
     // 根据条件控制上下页按钮的显示
-            document.getElementById("prevPageBtn").style.display = page > 1 ? "inline-block" : "none";
-            document.getElementById("nextPageBtn").style.display = page < totalPages ? "inline-block" : "none";
+    document.getElementById("prevPageBtn").style.display = page > 1 ? "inline-block" : "none";
+    document.getElementById("nextPageBtn").style.display = page < totalPages ? "inline-block" : "none";
     
     // 禁用/启用上下页按钮
     document.getElementById("prevPageBtn").classList.toggle("disabled", page === 1);
     document.getElementById("nextPageBtn").classList.toggle("disabled", page === totalPages);
     
-    // 强制隐藏所有可能导致问题的元素
+    // 隐藏所有不需要的分页元素
     document.getElementById("firstPageBtn").style.display = "none";
     document.getElementById("lastPageBtn").style.display = "none";
     document.getElementById("ellipsisStart").style.display = "none";
@@ -290,97 +286,19 @@ function generatePageNumbers(totalPages) {
     // 显示页码容器
     document.getElementById("pageNumbersContainer").style.display = "inline-block";
     
-    // 只在总页数>8时才显示首尾页和省略号
-    if (totalPages > 8) {
-        document.getElementById("firstPageBtn").style.display = "inline-block";
-        document.getElementById("lastPageBtn").style.display = "inline-block";
-        
-        // 显示/隐藏省略号
-        document.getElementById("ellipsisStart").style.display = page > 4 ? "inline-block" : "none";
-        document.getElementById("ellipsisEnd").style.display = page < totalPages - 3 ? "inline-block" : "none";
-        
-        // 确定页码范围
-        let startPage = Math.max(2, page - 3); // 从2开始，因为1是首页
-        let endPage = Math.min(totalPages - 1, page + 3); // 到totalPages-1结束，因为totalPages是末页
-        
-        // 调整范围以确保显示5个页码
-        if (endPage - startPage < 4) {
-            if (startPage === 2) {
-                endPage = Math.min(6, totalPages - 1);
-            } else if (endPage === totalPages - 1) {
-                startPage = Math.max(2, totalPages - 5);
-            }
-        }
-        
-        // 生成中间的页码按钮
-        for (let i = startPage; i <= endPage; i++) {
-            const li = document.createElement("li");
-            li.style.display = "inline-block";
-            li.className = `page-item ${i === page ? 'active' : ''}`;
-            
-            const a = document.createElement("a");
-            a.className = "page-link";
-            a.href = "#";
-            a.textContent = i;
-            
-            a.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (i !== page) {
-                    page = i;
-                    document.getElementById("results").innerHTML = "";
-                    search();
-                }
-            });
-            
-            li.appendChild(a);
-            pageNumbersContainer.appendChild(li);
-        }
-    } else {
-        // 总页数<=8时，显示所有页码
-        for (let i = 1; i <= totalPages; i++) {
-            const li = document.createElement("li");
-            li.style.display = "inline-block";
-            li.className = `page-item ${i === page ? 'active' : ''}`;
-            
-            const a = document.createElement("a");
-            a.className = "page-link";
-            a.href = "#";
-            a.textContent = i;
-            
-            a.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (i !== page) {
-                    page = i;
-                    document.getElementById("results").innerHTML = "";
-                    search();
-                }
-            });
-            
-            li.appendChild(a);
-            pageNumbersContainer.appendChild(li);
-        }
-    }     
+    // 极简分页：只显示"当前页/总页数"
+    const li = document.createElement("li");
+    li.className = "page-item active";
+    li.style.display = "inline-block";
     
-    // 已删除pageInfo元素，不再更新页码信息
+    const a = document.createElement("a");
+    a.className = "page-link";
+    a.href = "#";
+    a.textContent = `${page}/${totalPages}`;
+    a.style.cursor = "default"; // 不可点击
     
-    // 添加第一页和最后一页的点击事件
-    document.getElementById("firstPageBtn").querySelector("a").addEventListener("click", (e) => {
-        e.preventDefault();
-        if (page !== 1) {
-            page = 1;
-            document.getElementById("results").innerHTML = "";
-            search();
-        }
-    });
-    
-    document.getElementById("lastPageBtn").querySelector("a").addEventListener("click", (e) => {
-        e.preventDefault();
-        if (page !== totalPages) {
-            page = totalPages;
-            document.getElementById("results").innerHTML = "";
-            search();
-        }
-    });
+    li.appendChild(a);
+    pageNumbersContainer.appendChild(li);
 }
 
 function renderResults(items, append) {
@@ -390,7 +308,7 @@ function renderResults(items, append) {
     items.forEach(item => {
         // 创建Bootstrap列容器
         const colDiv = document.createElement('div');
-        colDiv.className = 'col-xl-2 col-lg-2 col-md-3 col-4 mb-3';
+        colDiv.className = 'col-xl-2 col-lg-2 col-md-3 col-6 mb-3';
 
         // 创建卡片容器
         const card = document.createElement('div');

@@ -16,32 +16,32 @@
 
     <!-- 搜索表单 -->
     <form id="searchForm" class="mb-4">
-        <!-- 第一行：输入框和搜索按钮 -->
+        <!-- 第一行：输入框 -->
         <div class="row g-2 mb-3">
-            <div class="col-lg-9 col-md-8 col-sm-12">
+            <div class="col-12">
                 <input type="text" class="form-control" name="han" id="hanInput" placeholder="汉字（可输入多个）" style="height: 44px; font-size: 16px;">
-            </div>
-            <div class="col-lg-3 col-md-4 col-sm-12">
-                <button type="submit" class="btn btn-primary w-100" style="height: 44px; font-size: 16px;">搜索</button>
             </div>
         </div>
         
-        <!-- 第二行：三个下拉框 -->
+        <!-- 第二行：三个下拉框和搜索按钮 -->
         <div class="row g-2 mb-3" id="searchFilters">
-            <div class="col-lg-4 col-md-4 col-sm-12">
+            <div class="col-lg-3 col-md-3 col-sm-6 col-6">
                 <select class="form-select select2" name="font" id="fontSelect" style="height: 44px;">
                     <option value="">字体</option>
                 </select>
             </div>
-            <div class="col-lg-4 col-md-4 col-sm-12">
+            <div class="col-lg-3 col-md-3 col-sm-6 col-6">
                 <select class="form-select select2" name="author" id="authorSelect" style="height: 44px;">
                     <option value="">书法家</option>
                 </select>
             </div>
-            <div class="col-lg-4 col-md-4 col-sm-12">
+            <div class="col-lg-3 col-md-3 col-sm-6 col-6">
                 <select class="form-select select2" name="book" id="bookSelect" style="height: 44px;">
                     <option value="">典籍</option>
                 </select>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-6 col-6">
+                <button type="submit" class="btn btn-primary w-100" style="height: 44px; font-size: 16px;">搜索</button>
             </div>
         </div>
     </form>
@@ -50,19 +50,19 @@
     <div id="hanziButtons" class="mb-4 d-flex flex-wrap gap-2"></div>
 
     <!-- 结果列表 -->
-    <div id="results" class="row g-3"></div>
+    <div id="results" class="row g-2"></div>
 
     <!-- 分页 -->
     <div id="paginationContainer" class="mt-4 align-items-center">
         <nav aria-label="分页">
             <ul class="pagination justify-content-center">
-                <li class="page-item" id="prevPageBtn"><a class="page-link" href="#">上一页</a></li>
+                <li class="page-item" id="prevPageBtn"><a class="page-link" href="#">‹</a></li>
                 <li class="page-item" id="firstPageBtn"><a class="page-link" href="#">1</a></li>
                 <li class="page-item" id="ellipsisStart"><span class="page-link">...</span></li>
                 <li class="page-item" id="pageNumbersContainer"><div id="pageNumbers" class="gap-1" style="white-space: nowrap;"></div></li>
                 <li class="page-item" id="ellipsisEnd"><span class="page-link">...</span></li>
                 <li class="page-item" id="lastPageBtn"><a class="page-link" href="#"></a></li>
-                <li class="page-item" id="nextPageBtn"><a class="page-link" href="#">下一页</a></li>
+                <li class="page-item" id="nextPageBtn"><a class="page-link" href="#">›</a></li>
             </ul>
         </nav>
     </div>
