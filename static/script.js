@@ -9,6 +9,26 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("paginationContainer").style.display = "none";
     console.log('页面加载完成 - 分页容器初始状态: 隐藏');
     loadOptions();
+    
+    // 检查URL参数，如果有搜索关键词则自动搜索
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchHan = urlParams.get('han');
+    if (searchHan) {
+        // 设置输入框的值
+        document.getElementById("hanInput").value = searchHan;
+        // 生成汉字按钮
+        generateHanziButtons(searchHan);
+        // 执行搜索
+        page = 1;
+        isShowingAll = false;
+        currentQuery = {
+            han: searchHan,
+            font: "",
+            author: "",
+            book: ""
+        };
+        search();
+    }
     document.getElementById("searchForm").addEventListener("submit", e => {
         e.preventDefault();
         page = 1;

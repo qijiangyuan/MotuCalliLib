@@ -77,42 +77,22 @@
     <div class="container">
         <ul class="nav nav-tabs w-100" id="bottomNav" role="tablist">
             <li class="nav-item flex-fill text-center" role="presentation">
-                <a class="nav-link active w-100" href="/" aria-selected="true">字库</a>
+                <a class="nav-link w-100" href="/" aria-selected="false">首页</a>
+            </li>
+            <li class="nav-item flex-fill text-center" role="presentation">
+                <a class="nav-link active w-100" href="/library" aria-selected="true">字库</a>
             </li>
             <li class="nav-item flex-fill text-center" role="presentation">
                 <a class="nav-link w-100" href="/calligraphy_set" aria-selected="false">集字</a>
             </li>
             <li class="nav-item flex-fill text-center" role="presentation">
-                <button class="nav-link w-100" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">设置</button>
+                <a class="nav-link w-100" href="/settings" aria-selected="false">设置</a>
             </li>
         </ul>
     </div>
 </nav>
 
-<!-- 选项卡内容区域 -->
-<div class="tab-content" id="bottomNavContent" style="margin-bottom: 70px;">
-    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-        <div class="container py-4">
-            <h3 class="text-center my-4">设置</h3>
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="darkModeToggle">
-                        <label class="form-check-label" for="darkModeToggle">启用深色模式</label>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="fontSizeSelect">字体大小</label>
-                        <select class="form-select" id="fontSizeSelect">
-                            <option value="small">小</option>
-                            <option value="medium" selected>中</option>
-                            <option value="large">大</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <script src="/static/script.js"></script>
 </body>

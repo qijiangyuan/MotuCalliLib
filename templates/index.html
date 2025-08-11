@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>墨研书法</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        
+        .search-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 3rem 2rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .logo-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 2.5rem;
+        }
+        
+        .search-input {
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .search-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(45deg, #2980b9, #3498db);
+        }
+        
+        .feature-icons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .feature-item {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 0.5rem;
+            background: linear-gradient(45deg, #ecf0f1, #bdc3c7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @media (max-width: 768px) {
+            .logo-title {
+                font-size: 2.5rem;
+            }
+            
+            .search-container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+            
+            .feature-icons {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="search-container">
+            <h1 class="logo-title">墨研书法</h1>
+            <p class="subtitle">探索中华书法艺术之美</p>
+            
+            <form id="homeSearchForm">
+                <div class="mb-3">
+                    <input type="text" class="form-control search-input" id="searchInput" 
+                           placeholder="请输入要搜索的汉字..." autocomplete="off">
+                </div>
+                <button type="submit" class="btn search-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    搜索字库
+                </button>
+            </form>
+            
+            <div class="feature-icons">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10,9 9,9 8,9"/>
+                        </svg>
+                    </div>
+                    <div>海量字库</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4"/>
+                            <path d="M9 7H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4"/>
+                            <path d="M15 11h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4"/>
+                            <path d="M15 7h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4"/>
+                        </svg>
+                    </div>
+                    <div>智能集字</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </div>
+                    <div>名家真迹</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航tab -->
+    <nav class="navbar fixed-bottom navbar-light bg-light py-0">
+        <div class="container">
+            <ul class="nav nav-tabs w-100" id="bottomNav" role="tablist">
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <a class="nav-link active w-100" href="/" aria-selected="true">首页</a>
+                </li>
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <a class="nav-link w-100" href="/library" aria-selected="false">字库</a>
+                </li>
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <a class="nav-link w-100" href="/calligraphy_set" aria-selected="false">集字</a>
+                </li>
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <a class="nav-link w-100" href="/settings" aria-selected="false">设置</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 引入Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('homeSearchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const searchText = document.getElementById('searchInput').value.trim();
+            if (searchText) {
+                // 跳转到字库页面并传递搜索参数
+                window.location.href = `/library?han=${encodeURIComponent(searchText)}`;
+            }
+        });
+        
+        // 回车键搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('homeSearchForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
