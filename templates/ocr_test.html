@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalliReader 测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+        h1 { margin-bottom: 20px; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 18px; }
+        .row { margin-bottom: 14px; }
+        .btn { background: #0d6efd; color: #fff; border: none; border-radius: 6px; padding: 10px 16px; cursor: pointer; }
+        .btn:disabled { background: #8ab4f8; cursor: not-allowed; }
+        .hint { color: #666; font-size: 14px; }
+        .result { margin-top: 16px; white-space: pre-wrap; }
+        .ok { color: #0a7a2f; }
+        .err { color: #c62828; }
+        img { max-width: 100%; max-height: 360px; border-radius: 6px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>CalliReader 上传识别测试</h1>
+    <div class="card">
+        <div class="row">
+            <input id="fileInput" type="file" accept=".png,.jpg,.jpeg,.bmp,.webp,image/*">
+        </div>
+        <div class="row hint">支持 png/jpg/jpeg/bmp/webp</div>
+        <div class="row">
+            <button id="runBtn" class="btn" onclick="runRecognize()">开始识别</button>
+        </div>
+        <div class="row">
+            <img id="preview" alt="">
+        </div>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const resultEl = document.getElementById('result');
+        const runBtn = document.getElementById('runBtn');
+
+        fileInput.addEventListener('change', () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) {
+                preview.removeAttribute('src');
+                return;
+            }
+            preview.src = URL.createObjectURL(f);
+        });
+
+        async function runRecognize() {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) {
+                resultEl.className = 'result err';
+                resultEl.textContent = '请先选择一张图片';
+                return;
+            }
+            const fd = new FormData();
+            fd.append('image', f);
+            runBtn.disabled = true;
+            resultEl.className = 'result';
+            resultEl.textContent = '识别中，请稍候...';
+            try {
+                const res = await fetch('/api/ocr_test/recognize', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!data.success) {
+                    resultEl.className = 'result err';
+                    resultEl.textContent = `失败：${data.message || '未知错误'}`;
+                    return;
+                }
+                resultEl.className = 'result ok';
+                resultEl.textContent = `后端: ${data.backend_active}\n识别结果: ${data.text || '（空）'}`;
+            } catch (e) {
+                resultEl.className = 'result err';
+                resultEl.textContent = `请求失败：${e.message}`;
+            } finally {
+                runBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

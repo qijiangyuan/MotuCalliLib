@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify, send_file, render_template
 import sqlite3
 import os
+import sys
+import shutil
+import json
 from PIL import Image
 import io
 import requests
@@ -11,6 +14,7 @@ from collections import OrderedDict
 import concurrent.futures
 import threading
 from functools import lru_cache
+import tempfile
 
 # 加载环境变量
 load_dotenv()
@@ -24,6 +28,10 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 DB_PATH = os.path.join("data", "shufadb.db")
+FEEDBACK_DB_PATH = os.path.join("data", "feedback.db")
+CALLIREADER_BASE_DIR = os.path.join("data", "models", "CalliReader")
+_callireader_model = None
+_callireader_lock = threading.Lock()
 
 # 图片缓存类
 class ImageCache:
@@ -115,9 +123,144 @@ def get_placeholder_image(target_size=(120, 120)):
         return img
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=60)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
     return conn
+
+def get_feedback_db():
+    conn = sqlite3.connect(FEEDBACK_DB_PATH, timeout=60)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
+
+def _patch_callireader_config_file(base_dir):
+    config_path = os.path.join(base_dir, "InternVL", "configuration_internvl_chat.py")
+    if not os.path.exists(config_path):
+        return
+    with open(config_path, "r", encoding="utf-8") as f:
+        text = f.read()
+    old_cond = "if llm_config['architectures'][0] == 'LlamaForCausalLM':"
+    if old_cond not in text:
+        return
+    text = text.replace(
+        "self.vision_config = InternVisionConfig(**vision_config)\n        if llm_config['architectures'][0] == 'LlamaForCausalLM':",
+        "self.vision_config = InternVisionConfig(**vision_config)\n        arch = llm_config.get('architectures', ['LlamaForCausalLM'])[0]\n        if arch == 'LlamaForCausalLM':"
+    )
+    text = text.replace("elif llm_config['architectures'][0] == 'InternLM2ForCausalLM':", "elif arch == 'InternLM2ForCausalLM':")
+    text = text.replace("llm_config['architectures'][0]", "arch")
+    with open(config_path, "w", encoding="utf-8") as f:
+        f.write(text)
+
+def _patch_callireader_json_config(base_dir):
+    config_path = os.path.join(base_dir, "InternVL", "config.json")
+    if not os.path.exists(config_path):
+        return
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+    changed = False
+    vision_cfg = config.get("vision_config", {})
+    if isinstance(vision_cfg, dict) and vision_cfg.get("use_flash_attn", None) is not False:
+        vision_cfg["use_flash_attn"] = False
+        config["vision_config"] = vision_cfg
+        changed = True
+    llm_cfg = config.get("llm_config", {})
+    if isinstance(llm_cfg, dict):
+        if llm_cfg.get("attn_implementation", None) != "eager":
+            llm_cfg["attn_implementation"] = "eager"
+            changed = True
+        config["llm_config"] = llm_cfg
+    if changed:
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+
+def _prepare_callireader_runtime(base_dir):
+    required_paths = [
+        os.path.join(base_dir, "InternVL", "config.json"),
+        os.path.join(base_dir, "InternVL", "preprocessor_config.json"),
+        os.path.join(base_dir, "InternVL", "modeling_internvl_chat.py"),
+        os.path.join(base_dir, "InternVL", "configuration_internvl_chat.py"),
+        os.path.join(base_dir, "InternVL", "model-00001-of-00004.safetensors"),
+        os.path.join(base_dir, "InternVL", "model-00002-of-00004.safetensors"),
+        os.path.join(base_dir, "InternVL", "model-00003-of-00004.safetensors"),
+        os.path.join(base_dir, "InternVL", "model-00004-of-00004.safetensors"),
+        os.path.join(base_dir, "models", "model.py"),
+        os.path.join(base_dir, "models", "similarity.py"),
+        os.path.join(base_dir, "utils", "utils.py"),
+        os.path.join(base_dir, "config", "configu.py"),
+        os.path.join(base_dir, "params", "best.pt"),
+        os.path.join(base_dir, "params", "gauss_norm.pth"),
+        os.path.join(base_dir, "params", "gauss_norm_mu_sigma.pth"),
+        os.path.join(base_dir, "params", "mlp1.pth"),
+        os.path.join(base_dir, "params", "token_embedding.pth"),
+        os.path.join(base_dir, "params", "vit_model.pt"),
+        os.path.join(base_dir, "params", "callialign.pth"),
+        os.path.join(base_dir, "params", "orderformer.pth"),
+        os.path.join(base_dir, "params", "new1000_token_embedding.pth")
+    ]
+    missing = [p for p in required_paths if not os.path.exists(p)]
+    if missing:
+        missing_rel = [os.path.relpath(p, base_dir) for p in missing]
+        return False, f"缺少文件: {', '.join(missing_rel)}"
+    abs_base = os.path.abspath(base_dir)
+    if abs_base not in sys.path:
+        sys.path.insert(0, abs_base)
+    hf_cache_mod = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "modules", "transformers_modules", "InternVL")
+    if os.path.exists(hf_cache_mod):
+        shutil.rmtree(hf_cache_mod, ignore_errors=True)
+    _patch_callireader_config_file(abs_base)
+    _patch_callireader_json_config(abs_base)
+    return True, ""
+
+def _get_callireader_model():
+    global _callireader_model
+    with _callireader_lock:
+        if _callireader_model is not None:
+            return _callireader_model, ""
+        try:
+            import torch
+            if not torch.cuda.is_available():
+                return None, "当前环境未检测到 CUDA，CalliReader 暂不支持在本机 CPU 模式稳定加载"
+        except Exception:
+            return None, "当前环境缺少可用的 torch CUDA 运行条件"
+        base_dir = os.path.abspath(CALLIREADER_BASE_DIR)
+        ok, msg = _prepare_callireader_runtime(base_dir)
+        if not ok:
+            return None, msg
+        os.environ["CHECKER_OCR_BACKEND"] = "callireader"
+        os.environ["CHECKER_CALLIREADER_DIR"] = base_dir
+        try:
+            from tools.checker_app import ChineseCalligraphyRecognitionV1
+            model = ChineseCalligraphyRecognitionV1()
+            if model.backend_active != "callireader":
+                return None, model.load_error or f"模型未激活，当前后端: {model.backend_active}"
+            _callireader_model = model
+            return _callireader_model, ""
+        except Exception as e:
+            return None, str(e)
+
+def _recognize_callireader_image_file(local_image_path):
+    model, err = _get_callireader_model()
+    if model is None:
+        return None, "", err
+    try:
+        result, _ = model.callireader_model.chat_ocr(
+            model.callireader_tokenizer,
+            model.callireader_detector,
+            local_image_path,
+            model.callireader_prompt,
+            model.callireader_generation_config,
+            use_p=True,
+            hard_vq=False,
+            drop_zero=True,
+            repetition_penalty=1.2,
+            return_history=True,
+            verbose=False
+        )
+        predicted_text = (result or "").strip().replace(" ", "")
+        return predicted_text, model.backend_active, ""
+    except Exception as e:
+        return None, model.backend_active, str(e)
 
 # 首页
 @app.route("/")
@@ -163,6 +306,317 @@ def settings():
     logger.info("设置页面路由被调用")
     print("设置页面路由被调用 - 控制台输出")
     return render_template("settings.html")
+
+# 管理员页面
+@app.route("/admin")
+def admin():
+    return render_template("admin.html")
+
+@app.route("/ocr_test")
+def ocr_test():
+    return render_template("ocr_test.html")
+
+@app.route("/api/ocr_test/recognize", methods=["POST"])
+def ocr_test_recognize():
+    image_file = request.files.get("image")
+    if image_file is None:
+        return jsonify({"success": False, "message": "请上传图片文件"}), 400
+    filename = (image_file.filename or "").lower()
+    if not filename:
+        return jsonify({"success": False, "message": "文件名无效"}), 400
+    ext = os.path.splitext(filename)[1]
+    if ext not in [".png", ".jpg", ".jpeg", ".bmp", ".webp"]:
+        return jsonify({"success": False, "message": "仅支持 png/jpg/jpeg/bmp/webp"}), 400
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as f:
+            image_file.save(f)
+            temp_path = f.name
+        text, backend_active, err = _recognize_callireader_image_file(temp_path)
+        if err:
+            return jsonify({"success": False, "message": f"识别失败: {err}"}), 500
+        return jsonify({
+            "success": True,
+            "backend_active": backend_active,
+            "text": text or ""
+        })
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+
+# 反馈接口
+@app.route("/api/report", methods=["POST"])
+def report_error():
+    data = request.json
+    glyph_id = data.get("glyph_id")
+    image_id = data.get("image_id")
+    han = data.get("han")
+    font = data.get("font")
+    author = data.get("author")
+    book = data.get("book_title") # 注意：前端传的是book_title
+    image_url = data.get("image_url")
+    reason = data.get("reason", "图片与文字不符")
+
+    if not glyph_id:
+        return jsonify({"success": False, "message": "缺少必要参数"}), 400
+
+    try:
+        conn = get_feedback_db()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO reports (glyph_id, image_id, han, font, author, book_title, image_url, reason)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (glyph_id, image_id, han, font, author, book, image_url, reason))
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True, "message": "反馈已提交"})
+    except Exception as e:
+        logger.error(f"提交反馈失败: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# 获取反馈列表（管理员）
+@app.route("/api/admin/reports")
+def get_reports():
+    status = request.args.get("status", "pending")
+    reason_filter = request.args.get("reason", "").strip()
+    max_conf = request.args.get("max_conf", "").strip()
+    han_filter = request.args.get("han", "").strip()  # 新增汉字检索参数
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 40)) # 默认每页显示40条
+    
+    conn = get_feedback_db()
+    cur = conn.cursor()
+    
+    query_base = "FROM reports WHERE status = ?"
+    params = [status]
+    
+    if reason_filter:
+        query_base += " AND reason LIKE ?"
+        params.append(f"%{reason_filter}%")
+    
+    if han_filter:  # 新增汉字检索逻辑
+        query_base += " AND han = ?"
+        params.append(han_filter)
+    
+    # 获取总数
+    count_query = f"SELECT COUNT(*) {query_base}"
+    cur.execute(count_query, params)
+    total = cur.fetchone()[0]
+    
+    # 获取分页数据
+    query = f"SELECT * {query_base} ORDER BY created_at DESC"
+    
+    # 注意：如果启用了 max_conf，我们需要在内存中过滤，这意味着分页也会受影响
+    # 简单的做法是：如果指定了 max_conf，先不分页获取所有数据，在内存中过滤后再分页
+    # 复杂的做法是：如果数据量非常大，这种内存过滤不可行。
+    # 考虑到当前需求，我们先实现内存过滤的分页逻辑
+    
+    if max_conf:
+        cur.execute(query, params)
+        all_reports = [dict(row) for row in cur.fetchall()]
+        
+        try:
+            max_conf_val = float(max_conf)
+            filtered_reports = []
+            import re
+            for r in all_reports:
+                match = re.search(r"conf:\s*(\d+\.\d+)", r["reason"])
+                if match:
+                    conf_val = float(match.group(1))
+                    if conf_val <= max_conf_val:
+                        filtered_reports.append(r)
+                else:
+                    # 如果没有conf，这里假设不显示
+                    pass
+            
+            # 更新总数和切片
+            total = len(filtered_reports)
+            start = (page - 1) * per_page
+            end = start + per_page
+            reports = filtered_reports[start:end]
+            
+        except ValueError:
+            # 如果max_conf无效，忽略它，走正常数据库分页
+            query += " LIMIT ? OFFSET ?"
+            params.extend([per_page, (page - 1) * per_page])
+            cur.execute(query, params)
+            reports = [dict(row) for row in cur.fetchall()]
+    else:
+        # 正常数据库分页
+        query += " LIMIT ? OFFSET ?"
+        params.extend([per_page, (page - 1) * per_page])
+        cur.execute(query, params)
+        reports = [dict(row) for row in cur.fetchall()]
+
+    conn.close()
+    
+    return jsonify({
+        "success": True, 
+        "reports": reports,
+        "total": total,
+        "page": page,
+        "per_page": per_page
+    })
+
+@app.route("/api/admin/verify_texts", methods=["POST"])
+def verify_texts():
+    data = request.json or {}
+    report_ids = data.get("report_ids", [])
+    if not isinstance(report_ids, list) or len(report_ids) == 0:
+        return jsonify({"success": False, "message": "缺少 report_ids"}), 400
+    conn = get_feedback_db()
+    cur = conn.cursor()
+    placeholders = ",".join(["?" for _ in report_ids])
+    cur.execute(f"SELECT id, han, image_url FROM reports WHERE id IN ({placeholders})", report_ids)
+    rows = cur.fetchall()
+    conn.close()
+    row_map = {int(r["id"]): dict(r) for r in rows}
+    model, err = _get_callireader_model()
+    if model is None:
+        return jsonify({"success": False, "message": f"CalliReader未就绪: {err}"}), 500
+    results = []
+    for rid in report_ids:
+        if rid not in row_map:
+            results.append({
+                "report_id": rid,
+                "success": False,
+                "message": "记录不存在"
+            })
+            continue
+        row = row_map[rid]
+        expected = (row.get("han") or "").strip()
+        image_url = (row.get("image_url") or "").strip()
+        if not expected or not image_url:
+            results.append({
+                "report_id": rid,
+                "success": False,
+                "message": "缺少 han 或 image_url"
+            })
+            continue
+        predicted, confidence, is_match = model.predict(image_url, expected)
+        results.append({
+            "report_id": rid,
+            "success": True,
+            "expected": expected,
+            "predicted": predicted,
+            "confidence": round(float(confidence), 4),
+            "is_match": bool(is_match),
+            "backend_active": model.backend_active
+        })
+    return jsonify({
+        "success": True,
+        "backend_requested": model.backend_requested,
+        "backend_active": model.backend_active,
+        "results": results
+    })
+
+# 处理反馈（删除图片）
+@app.route("/api/admin/handle_report_batch", methods=["POST"])
+def handle_report_batch():
+    data = request.json
+    report_ids = data.get("report_ids", [])
+    action = data.get("action") # 'ignore' (currently only support ignore for batch)
+    
+    if not report_ids or not action:
+        return jsonify({"success": False, "message": "缺少必要参数"}), 400
+        
+    if action != 'ignore':
+        return jsonify({"success": False, "message": "批量操作仅支持忽略"}), 400
+
+    feedback_conn = get_feedback_db()
+    feedback_cur = feedback_conn.cursor()
+    
+    try:
+        # 批量更新状态
+        placeholders = ','.join(['?' for _ in report_ids])
+        feedback_cur.execute(f"UPDATE reports SET status = 'ignored' WHERE id IN ({placeholders})", report_ids)
+        feedback_conn.commit()
+        
+        feedback_conn.close()
+        return jsonify({"success": True, "message": f"已批量忽略 {len(report_ids)} 条记录"})
+        
+    except Exception as e:
+        logger.error(f"批量处理反馈失败: {e}")
+        feedback_conn.close()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/api/admin/handle_report", methods=["POST"])
+def handle_report():
+    # If it's a batch request (list of IDs), forward to batch handler
+    if request.json and "report_ids" in request.json:
+        return handle_report_batch()
+        
+    data = request.json
+    report_id = data.get("report_id")
+    action = data.get("action") # 'delete_image', 'delete_glyph', 'ignore'
+    
+    if not report_id or not action:
+        return jsonify({"success": False, "message": "缺少必要参数"}), 400
+
+    feedback_conn = get_feedback_db()
+    feedback_cur = feedback_conn.cursor()
+    
+    # 获取报告详情
+    report = feedback_cur.execute("SELECT * FROM reports WHERE id = ?", (report_id,)).fetchone()
+    if not report:
+        feedback_conn.close()
+        return jsonify({"success": False, "message": "报告不存在"}), 404
+
+    try:
+        shufa_conn = get_db()
+        shufa_cur = shufa_conn.cursor()
+
+        if action == 'delete_image':
+            if report['image_id']:
+                # 删除指定图片
+                shufa_cur.execute("DELETE FROM images WHERE id = ?", (report['image_id'],))
+                # 检查该glyph是否还有其他图片，如果没有，是否要删除glyph？这里暂时保留glyph
+                shufa_conn.commit()
+                feedback_cur.execute("UPDATE reports SET status = 'resolved' WHERE id = ?", (report_id,))
+            else:
+                 # 如果没有image_id，尝试通过url删除
+                if report['image_url']:
+                    shufa_cur.execute("DELETE FROM images WHERE url = ?", (report['image_url'],))
+                    shufa_conn.commit()
+                    feedback_cur.execute("UPDATE reports SET status = 'resolved' WHERE id = ?", (report_id,))
+                else:
+                    shufa_conn.close()
+                    feedback_conn.close()
+                    return jsonify({"success": False, "message": "无法定位图片，缺少ID和URL"}), 400
+
+        elif action == 'delete_glyph':
+            # 删除整个字条目及其所有图片
+            shufa_cur.execute("DELETE FROM images WHERE glyph_id = ?", (report['glyph_id'],))
+            shufa_cur.execute("DELETE FROM glyphs WHERE id = ?", (report['glyph_id'],))
+            shufa_conn.commit()
+            feedback_cur.execute("UPDATE reports SET status = 'resolved' WHERE id = ?", (report_id,))
+
+        elif action == 'ignore':
+            feedback_cur.execute("UPDATE reports SET status = 'ignored' WHERE id = ?", (report_id,))
+        
+        else:
+            shufa_conn.close()
+            feedback_conn.close()
+            return jsonify({"success": False, "message": "无效的操作"}), 400
+
+        feedback_conn.commit()
+        shufa_conn.close()
+        feedback_conn.close()
+        
+        # 清理缓存
+        if action in ['delete_image', 'delete_glyph']:
+            image_cache.clear()
+            
+        return jsonify({"success": True, "message": "操作成功"})
+
+    except Exception as e:
+        logger.error(f"处理反馈失败: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 
 
 
@@ -312,13 +766,16 @@ def image(glyph_id):
 @app.route("/images/<int:glyph_id>")
 def images(glyph_id):
     conn = get_db()
-    rows = conn.execute("SELECT url FROM images WHERE glyph_id = ?", (glyph_id,)).fetchall()
+    rows = conn.execute("SELECT id, url FROM images WHERE glyph_id = ?", (glyph_id,)).fetchall()
     conn.close()
 
     if rows:
-        # 返回所有图片URL
-        return jsonify({"image_urls": [row["url"] for row in rows]})
-    return jsonify({"image_urls": []}), 404
+        # 返回所有图片URL和ID
+        return jsonify({
+            "image_urls": [row["url"] for row in rows],
+            "image_ids": [row["id"] for row in rows]
+        })
+    return jsonify({"image_urls": [], "image_ids": []}), 404
 
 # 生成集字API
 @app.route("/api/generate_calligraphy")
@@ -594,8 +1051,48 @@ def export_image_by_ids():
                 y = row * h
                 output_img.paste(img, (x, y))
         elif direction == "vertical-right":
+            # 修正：前端已经对image_ids进行了重排（最右列的数据在数组前面/后面？取决于前端逻辑）
+            # 前端 vertical-right 重排逻辑：[Col Max ... Col 0] (DOM顺序)
+            # image_ids[0] 属于最右列。
+            # 所以 idx // rows_per_col 越大，列应该越靠左。
+            # col = (cols_used - 1) - (idx // rows_per_col) 
+            # 让我们重新推演一下。
+            # 前端重排：
+            # gridPosition = col * charsPerLine + row; 
+            # rearrangedCharacters[gridPosition] = paddedCharacters[charIndex];
+            # 这里 gridPosition 是 DOM 索引。
+            # col 从 max 到 0。
+            # 当 col=max 时，gridPosition 很大（数组末尾）。
+            # 当 col=0 时，gridPosition 很小（数组开头）。
+            # 所以数组开头 (index 0) 对应 col 0 (最左列)。
+            # 数组末尾 (index max) 对应 col max (最右列)。
+            # 
+            # 前端填充逻辑：
+            # rearranged[gridPosition] = paddedCharacters[charIndex]
+            # charIndex 遍历文本顺序（第一句...最后一句）。
+            # 
+            # 例子：2列。Col 0 (左), Col 1 (右)。
+            # col=1 (右)。gridPos=Row+Rows。填入 charIndex 0..Rows。即第一句填入 Col 1（数组后半部分）。
+            # col=0 (左)。gridPos=Row。填入 charIndex Rows..Max。即第二句填入 Col 0（数组前半部分）。
+            # 
+            # 所以 DOM 数组：[第二句 (左列), 第一句 (右列)]。
+            # 
+            # 后端 image_ids: [第二句, 第一句]。
+            # 
+            # 遍历 image_ids：
+            # idx=0 (第二句)。我们希望它在左列 (col=0)。
+            # idx=Max (第一句)。我们希望它在右列 (col=1)。
+            # 
+            # 后端之前的逻辑：
+            # col = (cols_used - 1) - (idx // rows_per_col)
+            # idx=0 -> col=1 (右)。 错！把第二句放到了右边。
+            # 
+            # 后端修正逻辑：
+            # col = idx // rows_per_col
+            # idx=0 -> col=0 (左)。 对！
+            
             for idx, img in enumerate(pil_images):
-                col = (cols_used - 1) - (idx // rows_per_col)
+                col = idx // rows_per_col
                 row = idx % rows_per_col
                 x = col * w
                 y = row * h
