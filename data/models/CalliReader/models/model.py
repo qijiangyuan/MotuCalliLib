@@ -228,24 +228,20 @@ class Transformer(nn.Module):
 class OrderFormer:
     """封装后的模型,实现数据加载,训练,测试,推理功能"""
     def __init__(self, model_path=None,max_nums=300,input_dim=4, model_dim=256, num_heads=8, num_layers=4, output_dim=1,device=None,label_name="turn",norm=False):
-        # Force CPU for OrderFormer to avoid meta tensor issues with accelerate and save VRAM
-        # It is a small model so CPU inference is fast enough
-        device = torch.device("cpu")
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Initialize model on CPU
+        # Initialize model on empty weights first to handle meta device initialization
         self.model = Transformer(input_dim, model_dim, num_heads, num_layers, output_dim,norms=norm)
         
-        # Materialize any meta tensors (created by upstream init_empty_weights context) to CPU
-        self.model.to_empty(device='cpu')
-
         if isinstance(model_path,str):
-            # Load to CPU first
-            self.model.load_state_dict(torch.load(model_path, map_location='cpu'), assign=True)
+            # Load weights to CPU first
+            state_dict = torch.load(model_path, map_location='cpu')
+            # Load state dict
+            self.model.load_state_dict(state_dict, assign=True)
         
-        # Ensure model is bfloat16 to match input
-        self.model = self.model.to(torch.bfloat16)
-        
-        self.model = self.model.to(device)
+        # Move to device and convert dtype
+        self.model = self.model.to(device).to(torch.bfloat16)
 
         self.device=device
         self.max_nums=max_nums

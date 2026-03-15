@@ -119,17 +119,14 @@ class ChineseCalligraphyRecognitionV1:
             self.callireader_model = AutoModel.from_pretrained(
                 internvl_path,
                 torch_dtype=dtype,
-                low_cpu_mem_usage=True,
+                low_cpu_mem_usage=False,
                 _fast_init=False,
-                trust_remote_code=True,
-                load_in_4bit=True,
-                device_map='auto',
-                # llm_int8_enable_fp32_cpu_offload=True
+                trust_remote_code=True
             ).eval()
-            # if self.device == "cuda":
-            #     self.callireader_model = self.callireader_model.cuda()
-            # else:
-            #     self.callireader_model = self.callireader_model.to("cpu")
+            if self.device == "cuda":
+                self.callireader_model = self.callireader_model.cuda()
+            else:
+                self.callireader_model = self.callireader_model.to("cpu")
             self.callireader_tokenizer = AutoTokenizer.from_pretrained(internvl_path, trust_remote_code=True)
             self.callireader_detector = YOLO(yolo_checkpoint)
             self.callireader_generation_config = {

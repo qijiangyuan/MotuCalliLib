@@ -101,7 +101,7 @@
     "use_cache": true,
     "vocab_size": 92553
   },
-  "max_dynamic_patch": 6,
+  "max_dynamic_patch": 12,
   "min_dynamic_patch": 1,
   "model_type": "internvl_chat",
   "ps_version": "v2",

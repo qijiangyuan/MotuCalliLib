@@ -199,8 +199,7 @@ class InternVLChatModel(PreTrainedModel):
         self.system_message = self.conv_template.system_message
     def load_normed_tok_embeddings(self,vocab_size=92553, llm_hidden_size=4096,load_checkboard=False):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # tok_embeddings = nn.Embedding(vocab_size, llm_hidden_size, padding_idx=2).to_empty(device=device).to(torch.bfloat16)
-        tok_embeddings = nn.Embedding(vocab_size, llm_hidden_size, padding_idx=2).to(torch.bfloat16) # Don't move to device immediately, let accelerate handle it or move later
+        tok_embeddings = nn.Embedding(vocab_size, llm_hidden_size, padding_idx=2).to_empty(device=device).to(torch.bfloat16)
         tok_embeddings.load_state_dict(torch.load(NORM_TOK_EMBEDDING_PATH, weights_only=True, map_location="cpu"), assign=True)
         # Ensure it is bfloat16 after loading
         tok_embeddings = tok_embeddings.to(torch.bfloat16)
