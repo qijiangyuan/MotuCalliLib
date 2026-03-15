@@ -261,6 +261,8 @@ input::placeholder {
 /* 电脑端6列布局优化 */
 @media (min-width: 1200px) {
     .glyph-card {
+        width: calc(16.666% - 12px); /* 6列，减去margin */
+        margin: 6px;
         padding: 6px;
     }
     
@@ -278,8 +280,10 @@ input::placeholder {
 /* iPad端4列布局优化 */
 @media (min-width: 768px) and (max-width: 1199px) {
     .glyph-card {
+        width: calc(25% - 12px); /* 4列，减去margin */
+        margin: 6px;
         padding: 6px;
-        margin-bottom: 2px;
+        margin-bottom: 6px;
     }
     
     .glyph-card small {
@@ -292,19 +296,22 @@ input::placeholder {
 /* 手机端3列布局优化 */
 @media (max-width: 767px) {
     .glyph-card {
+        width: calc(33.333% - 8px); /* 3列，减去margin */
+        margin: 4px;
         padding: 4px;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
     }
     
     /* 强制覆盖结果区域的卡片内边距，保持严格方块 */
     #resultContainer .glyph-card {
         padding: 0 !important;
         margin-bottom: 4px;
+        width: auto !important; /* 集字页面由JS控制宽度或flex */
     }
     
     /* 强制覆盖首页搜索结果区域的卡片样式，防止拉伸 */
     #results .glyph-card {
-        padding: 4px !important;
+        padding: 6px !important;
         min-height: auto !important;
         max-height: none !important;
     }

@@ -31,16 +31,26 @@
             border-radius: 6px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .image-item:hover {
-            transform: scale(1.02);
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
         .image-item img {
             max-width: 100%;
             height: auto;
             border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex: 1;
+            object-fit: contain;
+        }
+        .image-item img:hover {
+            transform: scale(1.02);
+        }
+        .report-btn {
+            margin-top: 10px;
+            width: 100%;
+            font-size: 0.85rem;
         }
         .back-btn {
             margin-top: 20px;
@@ -111,6 +121,26 @@
         <div class="back-btn mb-4">
             <button id="backBtn" class="btn btn-primary">返回</button>
         </div>
+        <!-- 简单的反馈模态框 -->
+        <div id="feedbackModal" class="modal">
+            <div class="modal-content" style="max-width: 400px; padding: 20px; background: white; height: auto; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 8px;">
+                <h4 style="margin-top: 0;">反馈错误</h4>
+                <div class="mb-3">
+                    <label for="feedbackReason" class="form-label">请选择理由:</label>
+                    <select class="form-select" id="feedbackSelect" onchange="toggleOtherReason()">
+                        <option value="图片与文字不符">图片与文字不符</option>
+                        <option value="图片不清晰/残缺">图片不清晰/残缺</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <input type="text" class="form-control mt-2" id="feedbackReason" placeholder="请输入具体理由" style="display: none;">
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" onclick="closeFeedbackModal()">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitFeedback()">提交</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 图片放大模态框 -->
         <div id="imageModal" class="modal">
             <span class="close">&times;</span>
@@ -150,6 +180,82 @@
             return params;
         }
 
+        // 反馈相关变量
+        let currentFeedbackData = null;
+        const feedbackModal = document.getElementById('feedbackModal');
+        const feedbackSelect = document.getElementById('feedbackSelect');
+        const feedbackReasonInput = document.getElementById('feedbackReason');
+
+        // 切换“其他”输入框显示
+        window.toggleOtherReason = function() {
+            if (feedbackSelect.value === '其他') {
+                feedbackReasonInput.style.display = 'block';
+                feedbackReasonInput.focus();
+            } else {
+                feedbackReasonInput.style.display = 'none';
+            }
+        }
+
+        // 打开反馈模态框
+        function reportError(glyphId, imageUrl, han, author, book) {
+            currentFeedbackData = { glyphId, imageUrl, han, author, book };
+            feedbackSelect.value = "图片与文字不符"; // 重置默认值
+            feedbackReasonInput.value = ""; // 重置输入框
+            toggleOtherReason(); // 重置显示状态
+            feedbackModal.style.display = 'block';
+        }
+
+        // 关闭反馈模态框
+        window.closeFeedbackModal = function() {
+            feedbackModal.style.display = 'none';
+            currentFeedbackData = null;
+        }
+
+        // 提交反馈
+        window.submitFeedback = function() {
+            if (!currentFeedbackData) return;
+            
+            let reason = feedbackSelect.value;
+            if (reason === '其他') {
+                const customReason = feedbackReasonInput.value.trim();
+                if (!customReason) {
+                    alert('请填写具体理由');
+                    return;
+                }
+                reason = "其他: " + customReason;
+            }
+            
+            const { glyphId, imageUrl, han, author, book } = currentFeedbackData;
+            
+            fetch('/api/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    glyph_id: glyphId,
+                    image_id: 0, 
+                    image_url: imageUrl,
+                    han: han,
+                    font: '', 
+                    author: author,
+                    book_title: book,
+                    reason: reason
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('反馈提交成功，管理员会尽快处理。');
+                    closeFeedbackModal();
+                } else {
+                    alert('提交失败: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error('Report error:', err);
+                alert('网络错误，提交失败');
+            });
+        }
+
         // 加载页面数据
         function loadPageData() {
             const params = getUrlParams();
@@ -185,11 +291,39 @@
                             });
 
                             const caption = document.createElement('p');
-                            caption.className = 'mt-2 text-sm text-muted';
+                            caption.className = 'mt-2 text-sm text-muted mb-0';
                             caption.textContent = `图片 ${index + 1}`;
+
+                            // 创建反馈按钮
+                            const reportBtn = document.createElement('div');
+                            reportBtn.textContent = '⚠️';
+                            reportBtn.title = '反馈图片错误';
+                            reportBtn.style.position = 'absolute';
+                            reportBtn.style.top = '2px';
+                            reportBtn.style.right = '2px';
+                            reportBtn.style.cursor = 'pointer';
+                            reportBtn.style.fontSize = '20px';
+                            reportBtn.style.zIndex = '100';
+                            reportBtn.style.opacity = '0.7';
+                            reportBtn.style.textShadow = '0 0 2px white'; // 增加文字描边，防止在深色背景看不清
+                            
+                            reportBtn.onmouseover = () => reportBtn.style.opacity = '1';
+                            reportBtn.onmouseout = () => reportBtn.style.opacity = '0.7';
+                            
+                            // 确保父元素定位
+                            imageItem.style.position = 'relative';
+
+                            // 使用 addEventListener 替代 onclick
+                            reportBtn.addEventListener('click', function(e) {
+                                console.log('点击了反馈按钮:', glyphId);
+                                e.stopPropagation();
+                                e.preventDefault();
+                                reportError(glyphId, url, han, author, book);
+                            });
 
                             imageItem.appendChild(img);
                             imageItem.appendChild(caption);
+                            imageItem.appendChild(reportBtn);
                             imageContainer.appendChild(imageItem);
                         });
                     } else {

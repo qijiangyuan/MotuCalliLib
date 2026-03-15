@@ -9,45 +9,26 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("paginationContainer").style.display = "none";
     console.log('页面加载完成 - 分页容器初始状态: 隐藏');
     loadOptions();
-    
-    // 检查URL参数，如果有搜索关键词则自动搜索
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchHan = urlParams.get('han');
-    if (searchHan) {
-        // 设置输入框的值
-        document.getElementById("hanInput").value = searchHan;
-        // 生成汉字按钮
-        generateHanziButtons(searchHan);
-        // 执行搜索
-        page = 1;
-        isShowingAll = false;
-        currentQuery = {
-            han: searchHan,
-            font: "",
-            author: "",
-            book: ""
-        };
-        search();
-    }
     document.getElementById("searchForm").addEventListener("submit", e => {
         e.preventDefault();
         page = 1;
         isShowingAll = false; // 重置为默认显示
         document.getElementById("results").innerHTML = "";
-        
-        // 手动获取表单数据，确保Select2的值被正确获取
-        currentQuery = {
-            han: document.getElementById("hanInput").value.trim(),
-            font: document.getElementById("fontSelect").value,
-            author: document.getElementById("authorSelect").value,
-            book: document.getElementById("bookSelect").value
-        };
-        
-        console.log("搜索参数:", currentQuery); // 添加调试日志
+        currentQuery = Object.fromEntries(new FormData(e.target).entries());
         search();
         // 生成汉字按钮
         generateHanziButtons(currentQuery.han);
     });
+
+    // 检查URL参数并自动执行搜索
+    const urlParams = new URLSearchParams(window.location.search);
+    const hanParam = urlParams.get('han');
+    if (hanParam) {
+        document.getElementById('hanInput').value = hanParam;
+        currentQuery.han = hanParam;
+        search();
+        generateHanziButtons(hanParam);
+    }
 
     // 添加汉字输入框事件监听
     const hanInput = document.getElementById("hanInput");
@@ -128,12 +109,12 @@ function loadOptions() {
             // 初始化出处选择框
             const bookSelect = document.getElementById('bookSelect');
             $(bookSelect).empty();
-            $(bookSelect).append($('<option>', {value: '', text: '典籍'}));
+            $(bookSelect).append($('<option>', {value: '', text: '来源典籍'}));
             data.books.forEach(book => {
                 $(bookSelect).append($('<option>', {value: book, text: book}));
             });
             $(bookSelect).select2({
-                placeholder: '典籍',
+                placeholder: '来源典籍',
                 allowClear: true,
                 width: '100%'
             });
@@ -269,10 +250,14 @@ function search(append=false) {
         });
 }
 
-// 生成页码按钮 - 极简版本：只显示"当前页/总页数"
+// 生成页码按钮
 function generatePageNumbers(totalPages) {
     const pageNumbersContainer = document.getElementById("pageNumbers");
     pageNumbersContainer.innerHTML = "";
+    
+    // 设置最后一页按钮文本
+    const lastPageBtn = document.getElementById("lastPageBtn");
+    lastPageBtn.querySelector("a").textContent = totalPages;
     
     // 显示/隐藏分页控制元素 - 严格控制只有在有结果且非显示全部时才显示
     console.log('generatePageNumbers() - 分页显示判断:');
@@ -286,18 +271,27 @@ function generatePageNumbers(totalPages) {
         } else {
             document.getElementById("paginationContainer").style.display = "none";
             console.log('generatePageNumbers() - 分页容器已隐藏');
+            // 确保所有分页元素都被隐藏
+            document.getElementById("prevPageBtn").style.display = "none";
+            document.getElementById("nextPageBtn").style.display = "none";
+            document.getElementById("firstPageBtn").style.display = "none";
+            document.getElementById("ellipsisStart").style.display = "none";
+            document.getElementById("pageNumbers").innerHTML = "";
+            document.getElementById("pageNumbersContainer").style.display = "none";
+            document.getElementById("ellipsisEnd").style.display = "none";
+            document.getElementById("lastPageBtn").style.display = "none";
             return;
         }
     
     // 根据条件控制上下页按钮的显示
-    document.getElementById("prevPageBtn").style.display = page > 1 ? "inline-block" : "none";
-    document.getElementById("nextPageBtn").style.display = page < totalPages ? "inline-block" : "none";
+            document.getElementById("prevPageBtn").style.display = page > 1 ? "inline-block" : "none";
+            document.getElementById("nextPageBtn").style.display = page < totalPages ? "inline-block" : "none";
     
     // 禁用/启用上下页按钮
     document.getElementById("prevPageBtn").classList.toggle("disabled", page === 1);
     document.getElementById("nextPageBtn").classList.toggle("disabled", page === totalPages);
     
-    // 隐藏所有不需要的分页元素
+    // 强制隐藏所有可能导致问题的元素
     document.getElementById("firstPageBtn").style.display = "none";
     document.getElementById("lastPageBtn").style.display = "none";
     document.getElementById("ellipsisStart").style.display = "none";
@@ -306,49 +300,118 @@ function generatePageNumbers(totalPages) {
     // 显示页码容器
     document.getElementById("pageNumbersContainer").style.display = "inline-block";
     
-    // 极简分页：只显示"当前页/总页数"
-    const li = document.createElement("li");
-    li.className = "page-item active";
-    li.style.display = "inline-block";
+    // 只在总页数>8时才显示首尾页和省略号
+    if (totalPages > 8) {
+        document.getElementById("firstPageBtn").style.display = "inline-block";
+        document.getElementById("lastPageBtn").style.display = "inline-block";
+        
+        // 显示/隐藏省略号
+        document.getElementById("ellipsisStart").style.display = page > 4 ? "inline-block" : "none";
+        document.getElementById("ellipsisEnd").style.display = page < totalPages - 3 ? "inline-block" : "none";
+        
+        // 确定页码范围
+        let startPage = Math.max(2, page - 3); // 从2开始，因为1是首页
+        let endPage = Math.min(totalPages - 1, page + 3); // 到totalPages-1结束，因为totalPages是末页
+        
+        // 调整范围以确保显示5个页码
+        if (endPage - startPage < 4) {
+            if (startPage === 2) {
+                endPage = Math.min(6, totalPages - 1);
+            } else if (endPage === totalPages - 1) {
+                startPage = Math.max(2, totalPages - 5);
+            }
+        }
+        
+        // 生成中间的页码按钮
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement("li");
+            li.style.display = "inline-block";
+            li.className = `page-item ${i === page ? 'active' : ''}`;
+            
+            const a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.textContent = i;
+            
+            a.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (i !== page) {
+                    page = i;
+                    document.getElementById("results").innerHTML = "";
+                    search();
+                }
+            });
+            
+            li.appendChild(a);
+            pageNumbersContainer.appendChild(li);
+        }
+    } else {
+        // 总页数<=8时，显示所有页码
+        for (let i = 1; i <= totalPages; i++) {
+            const li = document.createElement("li");
+            li.style.display = "inline-block";
+            li.className = `page-item ${i === page ? 'active' : ''}`;
+            
+            const a = document.createElement("a");
+            a.className = "page-link";
+            a.href = "#";
+            a.textContent = i;
+            
+            a.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (i !== page) {
+                    page = i;
+                    document.getElementById("results").innerHTML = "";
+                    search();
+                }
+            });
+            
+            li.appendChild(a);
+            pageNumbersContainer.appendChild(li);
+        }
+    }     
     
-    const a = document.createElement("a");
-    a.className = "page-link";
-    a.href = "#";
-    a.textContent = `${page}/${totalPages}`;
-    a.style.cursor = "default"; // 不可点击
+    // 已删除pageInfo元素，不再更新页码信息
     
-    li.appendChild(a);
-    pageNumbersContainer.appendChild(li);
+    // 添加第一页和最后一页的点击事件
+    document.getElementById("firstPageBtn").querySelector("a").addEventListener("click", (e) => {
+        e.preventDefault();
+        if (page !== 1) {
+            page = 1;
+            document.getElementById("results").innerHTML = "";
+            search();
+        }
+    });
+    
+    document.getElementById("lastPageBtn").querySelector("a").addEventListener("click", (e) => {
+        e.preventDefault();
+        if (page !== totalPages) {
+            page = totalPages;
+            document.getElementById("results").innerHTML = "";
+            search();
+        }
+    });
 }
 
 function renderResults(items, append) {
     const container = document.getElementById("results");
     if (!append) container.innerHTML = "";
 
-    items.forEach(item => {
-        // 创建Bootstrap列容器
-        const colDiv = document.createElement('div');
-        colDiv.className = 'col-xl-2 col-lg-2 col-md-3 col-6 mb-3';
+    if (items.length === 0 && !append) {
+        container.innerHTML = '<div class="col-12 text-center mt-5 text-muted">未找到相关结果</div>';
+        return;
+    }
 
-        // 创建卡片容器
+    items.forEach(item => {
+        // 直接创建卡片容器，不需要Bootstrap列
         const card = document.createElement('div');
         card.className = 'glyph-card';
+        card.style.position = 'relative'; // 为反馈按钮定位
 
         // 创建文字信息
         const hanDiv = document.createElement('div');
         hanDiv.textContent = item.han;
         card.appendChild(hanDiv);
-
-        // 创建图片容器
-        const imgContainer = document.createElement('div');
-        imgContainer.style.display = 'flex';
-        imgContainer.style.flexWrap = 'wrap';
-        imgContainer.style.justifyContent = 'center';
-        imgContainer.style.alignItems = 'center';
-        imgContainer.style.flex = '1';
-        imgContainer.style.overflow = 'hidden';
-        imgContainer.style.width = '100%';
-        card.appendChild(imgContainer);
 
         // 创建作者信息
         const infoSmall = document.createElement('small');
@@ -365,21 +428,65 @@ function renderResults(items, append) {
                     img.className = 'glyph-img';
                     img.alt = item.han;
                     img.src = data.image_urls[0];
-                    imgContainer.appendChild(img);
+                    
+                    // 将图片插入到作者信息之后
+                    card.insertBefore(img, infoSmall);
+
+                    // 添加反馈按钮
+                    const reportBtn = document.createElement('div');
+                    reportBtn.innerHTML = '⚠️';
+                    reportBtn.title = '反馈图片错误';
+                    reportBtn.style.position = 'absolute';
+                    reportBtn.style.top = '5px';
+                    reportBtn.style.right = '5px';
+                    reportBtn.style.cursor = 'pointer';
+                    reportBtn.style.fontSize = '16px';
+                    reportBtn.style.opacity = '0.5';
+                    reportBtn.style.zIndex = '10';
+                    
+                    reportBtn.onmouseover = () => reportBtn.style.opacity = '1';
+                    reportBtn.onmouseout = () => reportBtn.style.opacity = '0.5';
+                    
+                    reportBtn.onclick = (e) => {
+                        e.stopPropagation(); // 阻止冒泡
+                        if(confirm('确定要反馈这张图片与文字不符吗？')) {
+                            fetch('/api/report_error', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    glyph_id: item.id,
+                                    image_id: data.image_ids ? data.image_ids[0] : null,
+                                    han: item.han,
+                                    font: item.font,
+                                    author: item.author,
+                                    book: item.book_title,
+                                    image_url: data.image_urls[0]
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(res => {
+                                if(res.success) {
+                                    alert('反馈已提交，感谢您的帮助！');
+                                } else {
+                                    alert('提交失败: ' + res.message);
+                                }
+                            });
+                        }
+                    };
+                    // card.appendChild(reportBtn); // 移除上一级页面的反馈按钮
                 }
             })
             .catch(error => {
                 console.error('加载图片失败:', error);
             });
 
-        // 为卡片添加点击事件
+        // 为整个卡片添加点击事件
         card.onclick = function() {
             // 在新窗口中打开查看所有图片页面
             window.open(`/view_all_images.html?glyph_id=${item.id}&han=${encodeURIComponent(item.han)}&author=${encodeURIComponent(item.author)}&book=${encodeURIComponent(item.book_title || '')}`, '_blank');
         };
 
-        colDiv.appendChild(card);
-        container.appendChild(colDiv);
+        container.appendChild(card);
     });
 }
 

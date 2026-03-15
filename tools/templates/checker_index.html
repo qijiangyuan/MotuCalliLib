@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字库自动巡检 - Chinese Calligraphy Recognition V1</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding: 20px; }
+        .stats-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 20px; text-align: center; }
+        .stats-number { font-size: 2rem; font-weight: bold; color: #333; }
+        .stats-label { color: #666; font-size: 0.9rem; }
+        .progress-container { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .log-console { background: #333; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; height: 300px; overflow-y: auto; margin-top: 20px; }
+        .current-image-preview { width: 100%; height: 200px; object-fit: contain; border: 1px dashed #ccc; margin-top: 10px; display: flex; align-items: center; justify-content: center; color: #aaa; background: #eee; }
+        #preview-img { max-width: 100%; max-height: 100%; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4">字库自动巡检系统 <small class="text-muted">v1.0</small></h2>
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="stat-total">0</div>
+                    <div class="stats-label">总图片数</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number text-primary" id="stat-processed">0</div>
+                    <div class="stats-label">已处理</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number text-danger" id="stat-mismatches" data-last="0">0</div>
+                    <div class="stats-label">发现错误</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number text-warning" id="stat-errors">0</div>
+                    <div class="stats-label">处理异常</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <h4>当前进度 <span id="status-text" class="badge bg-secondary ms-2">就绪</span></h4>
+            <div class="progress mb-3" style="height: 25px;">
+                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+                <button id="btn-start" class="btn btn-primary" onclick="startCheck()">开始巡检</button>
+                <button id="btn-stop" class="btn btn-danger" onclick="stopCheck()" disabled>停止</button>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <h5>正在检测</h5>
+                    <div class="current-image-preview">
+                        <span id="preview-text">等待开始...</span>
+                        <img id="preview-img" src="" alt="当前图片">
+                    </div>
+                    <div class="mt-2 text-muted small" id="current-info"></div>
+                </div>
+                <div class="col-md-8">
+                    <h5>实时日志</h5>
+                    <div class="log-console" id="log-console">
+                        <div>[System] Ready...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let pollInterval = null;
+
+        function log(msg) {
+            const console = document.getElementById('log-console');
+            const div = document.createElement('div');
+            // If message already contains timestamp [HH:MM:SS], don't add another one
+            if (msg.startsWith('[')) {
+                div.textContent = msg;
+            } else {
+                div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            }
+            console.appendChild(div);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function updateStats(data) {
+            document.getElementById('stat-total').textContent = data.total;
+            document.getElementById('stat-processed').textContent = data.processed;
+            
+            // Sync Logs from backend
+            if (data.logs && data.logs.length > 0) {
+                 const consoleEl = document.getElementById('log-console');
+                 // Clear old manual logs to avoid duplication if we are fully syncing?
+                 // Or just append new ones? 
+                 // Simple way: Clear and re-render last 50 logs from server state
+                 consoleEl.innerHTML = ''; 
+                 data.logs.forEach(l => {
+                     const div = document.createElement('div');
+                     div.textContent = l;
+                     consoleEl.appendChild(div);
+                 });
+                 consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            const mismatches = data.mismatches;
+            const lastMismatches = parseInt(document.getElementById('stat-mismatches').getAttribute('data-last') || 0);
+            
+            if (mismatches > lastMismatches) {
+                document.getElementById('stat-mismatches').textContent = mismatches;
+                document.getElementById('stat-mismatches').setAttribute('data-last', mismatches);
+            }
+
+            document.getElementById('stat-errors').textContent = data.errors;
+            
+            const percent = data.total > 0 ? (data.processed / data.total * 100).toFixed(1) : 0;
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = percent + '%';
+            
+            const statusBadge = document.getElementById('status-text');
+            statusBadge.textContent = data.status;
+            statusBadge.className = 'badge ms-2 ' + (data.status === 'running' ? 'bg-success' : 'bg-secondary');
+
+            if (data.current_image) {
+                const img = document.getElementById('preview-img');
+                const text = document.getElementById('preview-text');
+                
+                if (img.src !== data.current_image) {
+                    img.src = data.current_image;
+                    img.style.display = 'block';
+                    text.style.display = 'none';
+                }
+            }
+        }
+
+        function startCheck() {
+            const startBtn = document.getElementById('btn-start');
+            startBtn.disabled = true;
+            log('Sending start request...');
+            
+            fetch('/api/start', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    log('Start response: ' + JSON.stringify(data));
+                    if (data.success) {
+                        isRunning = true;
+                        document.getElementById('btn-stop').disabled = false;
+                        log('Starting background process...');
+                        log('Loading model weights (This may take a while)...');
+                        
+                        // Start polling
+                        if (pollInterval) clearInterval(pollInterval);
+                        pollInterval = setInterval(pollStatus, 1000);
+                    } else {
+                        log('Failed to start: ' + data.message);
+                        startBtn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    log('Error: ' + err);
+                    startBtn.disabled = false;
+                });
+        }
+
+        function stopCheck() {
+            fetch('/api/stop', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        log('Stopping background process...');
+                        document.getElementById('btn-stop').disabled = true;
+                    } else {
+                        log('Stop failed: ' + data.message);
+                    }
+                })
+                .catch(err => log('Error stopping: ' + err));
+        }
+
+        function pollStatus() {
+            fetch('/api/status?t=' + new Date().getTime())
+                .then(res => res.json())
+                .then(data => {
+                    // Update UI
+                    document.getElementById('stat-total').textContent = data.total;
+                    document.getElementById('stat-processed').textContent = data.processed;
+                    document.getElementById('stat-mismatches').textContent = data.mismatches;
+                    document.getElementById('stat-errors').textContent = data.errors;
+                    
+                    // Status badge
+                    const statusBadge = document.getElementById('status-text');
+                    statusBadge.textContent = data.status;
+                    statusBadge.className = 'badge ms-2 ' + (data.status === 'running' ? 'bg-success' : 'bg-secondary');
+
+                    // Progress bar
+                    const percent = data.total > 0 ? (data.processed / data.total * 100).toFixed(1) : 0;
+                    const progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = percent + '%';
+                    progressBar.textContent = percent + '%';
+
+                    // Log new mismatches
+                    const lastMismatches = parseInt(document.getElementById('stat-mismatches').getAttribute('data-last') || 0);
+                    if (data.mismatches > lastMismatches) {
+                        document.getElementById('stat-mismatches').setAttribute('data-last', data.mismatches);
+                        log(`⚠️ Found mismatch! Image ID: ${data.current_image_id || 'Unknown'}`);
+                    }
+
+                    // Update image preview
+                    if (data.current_image) {
+                        const img = document.getElementById('preview-img');
+                        const text = document.getElementById('preview-text');
+                        if (img.src !== data.current_image) {
+                            img.src = data.current_image;
+                            img.style.display = 'block';
+                            text.style.display = 'none';
+                        }
+                    }
+                    const info = document.getElementById('current-info');
+                    const backendRequested = data.model_backend_requested || '';
+                    const backendActive = data.model_backend_active || '';
+                    const backendText = backendRequested ? `模型后端: ${backendActive || 'unknown'} (请求: ${backendRequested})` : '';
+                    const downloadText = data.model_download_model ? `模型下载: ${data.model_download_model}${data.model_download_file ? ` ${data.model_download_file}` : ''} ${data.model_download_percent || 0}%` : '';
+                    info.textContent = [backendText, downloadText].filter(Boolean).join(' | ');
+
+                    // Handle completion
+                    if (data.status === 'completed' || data.status === 'stopped' || data.status === 'error') {
+                        isRunning = false;
+                        document.getElementById('btn-start').disabled = false;
+                        document.getElementById('btn-stop').disabled = true;
+                        if (pollInterval) {
+                            clearInterval(pollInterval);
+                            pollInterval = null;
+                        }
+                        log('Process finished with status: ' + data.status);
+                    }
+                })
+                .catch(err => {
+                    console.error('Polling error', err);
+                });
+        }
+        // Initial load - check if process is already running
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/status?t=' + new Date().getTime())
+                .then(res => res.json())
+                .then(data => {
+                    updateStats(data);
+                    // Always treat as stopped on initial load unless confirmed otherwise
+                    if (data.status === 'running') {
+                        isRunning = true;
+                        document.getElementById('btn-start').disabled = true;
+                        document.getElementById('btn-stop').disabled = false;
+                        log('Reconnected to running process...');
+                        pollInterval = setInterval(pollStatus, 1000);
+                    } else {
+                        isRunning = false;
+                        document.getElementById('btn-start').disabled = false;
+                        document.getElementById('btn-stop').disabled = true;
+                        log('Ready to start...');
+                    }
+                });
+        });
+    </script>
+</body>
+</html>

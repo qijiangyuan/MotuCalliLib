@@ -305,6 +305,10 @@ function generateCalligraphy() {
         .then(res => res.json())
         .then(data => {
             if (data.success && data.characters) {
+                // 保存生成参数到容器，供导出使用
+                resultContainer.setAttribute('data-cols', charsPerLineInput || '5');
+                resultContainer.setAttribute('data-direction', directionSelect || 'horizontal');
+                
                 renderCalligraphyResult(data.characters, directionSelect);
             } else {
                 resultContainer.innerHTML = '<p class="text-danger">生成失败: ' + (data.message || '未知错误') + '</p>';
@@ -1504,8 +1508,12 @@ function exportAsImage() {
             return;
         }
 
-        // 获取每行显示的字数
-        const charsPerLine = parseInt(document.getElementById('charsPerLineInput').value) || 5;
+        // 获取每行显示的字数和排列方向
+        const storedCols = resultContainer.getAttribute('data-cols');
+        const storedDirection = resultContainer.getAttribute('data-direction');
+        
+        const charsPerLine = storedCols ? parseInt(storedCols) : (parseInt(document.getElementById('charsPerLineInput').value) || 5);
+        const direction = storedDirection || (document.getElementById('directionSelect') ? document.getElementById('directionSelect').value : 'horizontal');
 
         // 重新显示加载状态
         const loadingDiv = document.createElement('div');
@@ -1529,11 +1537,6 @@ function exportAsImage() {
             document.head.appendChild(style2);
         }
         document.body.appendChild(loadingDiv);
-
-        // 发送请求到后端API
-        // 获取当前选择的排列方向
-        const directionSelect = document.getElementById('directionSelect');
-        const direction = directionSelect ? directionSelect.value : 'horizontal';
 
         // 调试信息：确认占位符是否被包含
         console.log('准备发送到后端的图片ID数量:', imageIds.length);
