@@ -32,6 +32,20 @@ data/feedback.db
 .DS_Store
 Thumbs.db
 
+# 本机工作区数据、截图验收临时文件与本次改动前备份
+data/workspace.db
+data/*.db-wal
+data/*.db-shm
+.backup_fixes/
+tmp/
+output/
+
+# 本机调试输出与核查工具配置
+/debug_output.txt
+/test_output.txt
+/test_inference_debug*.txt
+data/feedback_checker_config.json
+
 # Model weights
 *.pt
 *.pth

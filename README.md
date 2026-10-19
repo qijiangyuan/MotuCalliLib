@@ -1,6 +1,29 @@
 # MotuCalliLib - 书法字库应用
 
-这是一个用于管理和展示书法字库的Web应用程序。
+墨研书法字库与集字字典软件 V1.0 是面向个人临帖学习和集字创作的 Flask 应用。
+正式功能包含：字形组合检索、出处与图版详情、收藏、逐字替换、四种排版方向、
+作品持久化、PNG 导出、草稿恢复、备份合并恢复、纠错记录和全局阅读偏好。
+
+新版入口仍为 `python app_new.py`，默认访问 `http://127.0.0.1:5000`。
+界面所需 CSS / JavaScript 均保存在本地；字图默认为数据库中的远程来源。
+新建作品、收藏和纠错保存在 `data/workspace.db`，主字库按只读方式访问。
+同一服务实例共享一个个人工作区。本版本未实现账号隔离，不应直接作为多人公网平台。
+
+项目评估、材料定位和变更说明见 `docs/PROJECT_REVIEW.md`。
+本次登记材料为 AI 辅助的核验稿，位于 `output/softcopyright/`；请先阅读其中的材料清单，
+核验当前登记系统的声明要求并补全真实权属信息，不能直接签署不符合事实的声明。
+
+### 新版运行配置
+
+- `MOTU_DB_PATH`：主字库绝对路径，默认项目内 `data/shufadb.db`。
+- `MOTU_WORKSPACE_DB`：个人工作库路径，默认 `data/workspace.db`，首次启动自动创建。
+- `USE_LOCAL_IMAGES`：是否优先读取本地图片，默认 `false`。
+- `LOCAL_IMAGE_DIR`：本地字图目录，以图片编号命名，例如 `35233.png`。
+- `HOST` / `PORT`：默认 `127.0.0.1` / `5000`。`DEBUG` 默认关闭。
+
+运行核心测试：`python tests/test_product.py`；运行原有数据库和日志测试：`python tests/run_tests.py`。
+独立浏览器验收脚本：`tools/preview_qa.cjs`，支持 `PLAYWRIGHT_MODULE` 和 `MOTU_PREVIEW_URL` 配置。
+浏览器验收需在独立演示工作库运行，以免演示作品或核查记录写入日常工作区。
 
 ## 功能特点
 

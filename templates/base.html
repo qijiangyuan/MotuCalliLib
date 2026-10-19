@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="{{ software.description }}" />
+    <title>
+      {% block title %}{{ software.short_name }}{% endblock %} · {{ software.version }}
+    </title>
+    <link rel="icon" href="/static/seal.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/product.css" />
+    <script src="/static/product.js" defer></script>
+    {% block scripts %}{% endblock %}
+  </head>
+  <body data-page="{{ page }}">
+    <a class="skip-link" href="#main">跳到正文</a>
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="{{ software.short_name }}首页">
+        <span class="seal">墨</span>
+        <span>
+          {{ software.short_name }}
+          <small>CALLIGRAPHY LIBRARY</small>
+        </span>
+      </a>
+      <nav aria-label="主导航">
+        {% for key,url,label in
+        [('home','/','首页'),('library','/library','书法字典'),('compose','/calligraphy_set','集字创作'),('works','/works','我的作品'),('settings','/settings','设置')]
+        %}
+        <a
+          href="{{ url }}"
+          class="{{ 'active' if page == key else '' }}"
+          aria-current="{{ 'page' if page == key else 'false' }}"
+        >
+          {{ label }}
+        </a>
+        {% endfor %}
+      </nav>
+      <a class="help-link" href="/help">使用指南 ↗</a>
+    </header>
+    <main id="main" class="main">{% block content %}{% endblock %}</main>
+    <footer class="app-footer">
+      <span>{{ software.name }} {{ software.version }}</span>
+      <span>识字形 · 知出处 · 成篇章</span>
+    </footer>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <dialog id="confirmDialog" class="small-dialog">
+      <form method="dialog">
+        <h2>确认操作</h2>
+        <p id="confirmText"></p>
+        <div class="actions">
+          <button value="cancel" class="button secondary">取消</button>
+          <button value="yes" class="button primary">确认</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

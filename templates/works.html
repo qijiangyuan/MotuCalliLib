@@ -1,0 +1,20 @@
+{% extends 'base.html' %} {% block title %}我的作品{% endblock %} {% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">COLLECTION / 我的作品</div>
+    <h1>把笔墨，留在书案上</h1>
+    <p>已保存的文字、字形和排列设置可随时重新打开，继续创作。</p>
+  </div>
+  <a class="button primary" href="/calligraphy_set">＋ 新建作品</a>
+</div>
+<div class="results-toolbar">
+  <form id="workSearch" class="search-row">
+    <label class="sr-only" for="workQuery">搜索作品名称或文字</label>
+    <input id="workQuery" placeholder="搜索作品名称或文字" maxlength="100" />
+    <button class="button secondary">搜索</button>
+  </form>
+  <span id="workCount" class="muted"></span>
+</div>
+<section id="worksGrid" class="works-grid"></section>
+<p class="field-hint">作品保存于本机服务工作区；备份与恢复请前往“设置”。</p>
+{% endblock %}

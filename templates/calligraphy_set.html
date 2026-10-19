@@ -1,112 +1,131 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>墨研书法字库 - 集字</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-<div class="container py-4">
-    <!-- 顶部测试区域已移除 -->
-    
-    <h1 class="mb-4">墨研书法字库 - 集字</h1>
-
-    <!-- 集字输入区域 -->
-    <div class="mb-4 p-4 bg-light rounded-lg calligraphy-input-section">
-        <textarea class="form-control calligraphy-textarea" id="textInput" rows="4" placeholder="请输入要集字的文字内容"></textarea>
-        
-        <!-- 控制选项区域 -->
-        <div class="mt-4">
-            <!-- 单行：字体、书法家、典籍、排列方式、每行字数、生成按钮 -->
-            <div class="row g-2 mb-3 align-items-stretch" style="min-height: 44px;">
-                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 col-6">
-                    <select class="form-select calligraphy-select" id="fontSelect" style="height: 44px;">
-                        <option value="">字体</option>
-                    </select>
-                </div>
-                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 col-6">
-                    <select class="form-select calligraphy-select" id="calligrapherSelect" style="height: 44px;">
-                        <option value="">书法家</option>
-                    </select>
-                </div>
-                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 col-6">
-                    <select class="form-select calligraphy-select" id="bookSelect" style="height: 44px;">
-                        <option value="">典籍</option>
-                    </select>
-                </div>
-                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 col-6">
-                    <select class="form-select calligraphy-select" id="directionSelect" style="height: 44px;">
-                        <option value="">排列方式</option>
-                        <option value="horizontal" selected>横排左起</option>
-                        <option value="horizontal-reverse">横排右起</option>
-                        <option value="vertical-left">竖排左起</option>
-                        <option value="vertical-right">竖排右起</option>
-                    </select>
-                </div>
-                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 col-6">
-                    <input type="number" class="form-select" id="charsPerLineInput" min="1" placeholder="单行字数" style="height: 44px;">
-                </div>
-                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 col-6">
-                    <button class="btn btn-primary w-100 calligraphy-btn" id="generateBtn" style="height: 44px;">生成集字</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap测试对比区域已移除 -->
-
-    <!-- 集字结果区域 -->
-    <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">集字结果</h3>
-            <div id="calligraphyStats" class="text-muted" style="font-size: 14px;">
-                <!-- 统计信息将通过JavaScript动态添加 -->
-            </div>
-        </div>
-        <div id="resultContainer" class="p-4 border rounded-lg min-vh-50 flex items-center justify-center" style="display: flex; flex-direction: column;">
-            <p class="text-muted">请输入文字并点击生成按钮</p>
-        </div>
-    </div>
-
-    <!-- 操作按钮区域 -->
-    <div class="mb-4 d-flex justify-content-center gap-3">
-        <button class="btn btn-secondary" id="clearBtn">清空</button>
-        <button class="btn btn-primary" id="saveBtn">保存</button>
-        <button class="btn btn-success" id="exportBtn">导出图片</button>
-    </div>
+{% extends 'base.html' %} {% block title %}集字创作{% endblock %} {% block scripts %}
+<script src="/static/composer.js" defer></script>
+{% endblock %} {% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">COMPOSITION / 集字创作</div>
+    <h1>采众家笔意，成自己的篇章</h1>
+    <p>输入诗文 → 生成字形 → 逐字替换 → 保存与导出</p>
+  </div>
+  <a href="/works" class="button secondary">我的作品 ↗</a>
 </div>
-
-<!-- 引入Bootstrap JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-
-<!-- 底部导航tab -->
-<nav class="navbar fixed-bottom navbar-light bg-light py-0">
-    <div class="container">
-        <ul class="nav nav-tabs w-100" id="bottomNav" role="tablist">
-            <li class="nav-item flex-fill text-center" role="presentation">
-                <a class="nav-link w-100" href="/" aria-selected="false">首页</a>
-            </li>
-            <li class="nav-item flex-fill text-center" role="presentation">
-                <a class="nav-link w-100" href="/library" aria-selected="false">字库</a>
-            </li>
-            <li class="nav-item flex-fill text-center" role="presentation">
-                <a class="nav-link active w-100" href="/calligraphy_set" aria-selected="true">集字</a>
-            </li>
-            <li class="nav-item flex-fill text-center" role="presentation">
-                <a class="nav-link w-100" href="/settings" aria-selected="false">设置</a>
-            </li>
-        </ul>
+<div class="composer-layout">
+  <aside class="panel composer-controls">
+    <form id="composeForm">
+      <div class="panel-title">
+        <h2>创作内容</h2>
+        <span class="muted" id="textCount">0 / 200</span>
+      </div>
+      <label for="workTitle">作品名称</label>
+      <input id="workTitle" maxlength="60" placeholder="未命名作品，保存时可自动命名" />
+      <label for="composeText">集字文字</label>
+      <textarea
+        id="composeText"
+        rows="5"
+        maxlength="1000"
+        required
+        placeholder="例如：春和景明惠风和畅"
+      ></textarea>
+      <p class="field-hint">最多 200 个汉字；生成时忽略标点、空格与换行。</p>
+      <div class="chips">
+        <button type="button" data-poem="春和景明惠风和畅">春和景明</button>
+        <button type="button" data-poem="山不在高有仙则名水不在深有龙则灵">
+          山水有灵
+        </button>
+      </div>
+      <label for="composeFont">书体</label>
+      <select id="composeFont">
+        <option value="">全部书体</option>
+      </select>
+      <label for="composeAuthor">书法家</label>
+      <input id="composeAuthor" list="composeAuthors" placeholder="不限书家" />
+      <datalist id="composeAuthors"></datalist>
+      <label for="composeBook">典籍</label>
+      <input id="composeBook" list="composeBooks" placeholder="不限典籍" />
+      <datalist id="composeBooks"></datalist>
+      <button class="button primary full-width" id="generateBtn" type="submit">
+        生成集字 →
+      </button>
+    </form>
+    <div class="control-divider"></div>
+    <h2>章法与排版</h2>
+    <label for="direction">排列方向</label>
+    <select id="direction">
+      <option value="horizontal">横排左起</option>
+      <option value="horizontal-reverse">横排右起</option>
+      <option value="vertical-left">竖排左起</option>
+      <option value="vertical-right">竖排右起</option>
+    </select>
+    <label for="cols">每行或每列字数</label>
+    <input id="cols" type="number" value="4" min="1" max="20" />
+    <div class="two-fields">
+      <label>
+        字格尺寸
+        <select id="exportSize">
+          <option value="160">160 px</option>
+          <option value="240" selected>240 px</option>
+          <option value="400">400 px</option>
+        </select>
+      </label>
+      <label>
+        字格间距
+        <input id="exportGap" type="number" min="0" max="60" value="12" />
+      </label>
     </div>
-</nav>
-
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-<script src="/static/calligraphy_set.js"></script>
-
-<!-- 强制显示测试区域的脚本已移除 -->
-</body>
-</html>
+    <label for="background">画布背景</label>
+    <select id="background">
+      <option value="white">素白</option>
+      <option value="paper">宣纸色</option>
+      <option value="transparent">透明画布</option>
+    </select>
+    <p class="field-hint">字图保持原始底色；透明画布不自动去除字图背景。</p>
+  </aside>
+  <section class="composer-workspace">
+    <div class="canvas-toolbar">
+      <div>
+        <h2>作品预览</h2>
+        <span id="composeStatus" class="muted" role="status">从左侧输入第一句文字</span>
+      </div>
+      <button class="button subtle" id="clearWork">新建</button>
+    </div>
+    <div id="missingNotice" class="notice" hidden></div>
+    <div class="canvas-wrap">
+      <div id="compositionCanvas" class="composition-canvas">
+        <div class="empty-state">
+          <span class="empty-character">书</span>
+          <h3>落笔之前，先选一段诗文</h3>
+          <p>生成后点击任意字形，即可挑选其他写法。</p>
+        </div>
+      </div>
+    </div>
+    <div class="work-actions">
+      <span id="saveStatus" class="muted">作品尚未保存</span>
+      <div class="actions">
+        <button class="button secondary" id="saveWork" disabled>保存作品</button>
+        <button class="button primary" id="exportWork" disabled>导出 PNG ↓</button>
+      </div>
+    </div>
+  </section>
+</div>
+<dialog id="selectionDialog" class="selection-dialog">
+  <button class="dialog-close" aria-label="关闭选字窗口">×</button>
+  <div class="eyebrow">字形选择</div>
+  <h2 id="selectionTitle">替换字形</h2>
+  <p class="muted">选择后立即更新作品。可更改筛选条件补齐缺字。</p>
+  <form id="selectionForm" class="filter-row">
+    <label>
+      书体
+      <select id="selectFont">
+        <option value="">全部书体</option>
+      </select>
+    </label>
+    <label>
+      书家
+      <input id="selectAuthor" list="composeAuthors" placeholder="全部书家" />
+    </label>
+    <button type="submit" class="button primary">筛选</button>
+  </form>
+  <div id="selectionResults" class="selection-grid"></div>
+  <nav id="selectionPages" class="pagination" aria-label="选字结果分页"></nav>
+</dialog>
+{% endblock %}
